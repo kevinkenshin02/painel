@@ -1,0 +1,282 @@
+// Schema do banco de dados do painel de gestão da Óticas Tanaka e Relojoaria
+// Aprovado com o dono da loja antes da implementação.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Estoque
+// ---------------------------------------------------------------------------
+
+model ArmacaoEstoque {
+  id             Int      @id @default(autoincrement())
+  codigo         String   @unique
+  marcaModelo    String
+  corReferencia  String
+  fornecedor     String
+  dataEntrada    DateTime
+  quantidade     Int
+  custoUnitario  Float
+  precoVenda     Float
+  ativo          Boolean  @default(true)
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  vendas Venda[]
+
+  @@map("estoque_armacoes")
+}
+
+enum MarcaRelogio {
+  ORIENT
+  MAGNUM
+  LINCE
+  X_WATCH
+  COSMOS
+  CHAMPION
+  SKMEI
+  OUTRO
+}
+
+enum PublicoRelogio {
+  MASCULINO
+  FEMININO
+  INFANTIL
+  UNISSEX
+}
+
+enum MecanismoRelogio {
+  ANALOGICO
+  AUTOMATICO
+  DIGITAL
+  SMART
+  OUTRO
+}
+
+model RelogioEstoque {
+  id               Int              @id @default(autoincrement())
+  codigo           String           @unique
+  marca            MarcaRelogio
+  marcaOutro       String?
+  modeloReferencia String
+  tipoPublico      PublicoRelogio
+  tipoMecanismo    MecanismoRelogio
+  fornecedor       String
+  dataEntrada      DateTime
+  quantidade       Int
+  custoUnitario    Float
+  precoVenda       Float
+  ativo            Boolean          @default(true)
+  criadoEm         DateTime         @default(now())
+  atualizadoEm     DateTime         @updatedAt
+
+  vendas Venda[]
+
+  @@map("estoque_relogios")
+}
+
+model LenteEstoque {
+  id             Int      @id @default(autoincrement())
+  codigo         String   @unique
+  descricao      String
+  grau           String
+  fornecedor     String
+  dataEntrada    DateTime
+  quantidade     Int
+  custoUnitario  Float
+  precoVenda     Float
+  ativo          Boolean  @default(true)
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  vendas Venda[]
+
+  @@map("estoque_lentes")
+}
+
+// ---------------------------------------------------------------------------
+// Ordens de serviço
+// ---------------------------------------------------------------------------
+
+enum TipoServico {
+  VISAO_SIMPLES
+  MULTIFOCAL
+  ALTO_PADRAO_BRASLAB
+  CONSERTO_RELOGIO
+  TROCA_PULSEIRA_BATERIA
+  AJUSTE_ARMACAO
+  OUTRO
+}
+
+enum StatusOS {
+  RECEBIDO
+  NO_LABORATORIO_BANCADA
+  PRONTO_PARA_AVISAR
+  CLIENTE_AVISADO
+  ENTREGUE
+}
+
+model OrdemServico {
+  id               Int         @id @default(autoincrement())
+  dataEntrada      DateTime
+  clienteNome      String
+  clienteWhatsapp  String
+  tipoServico      TipoServico
+  descricao        String
+  prazoPrometido   DateTime
+  status           StatusOS    @default(RECEBIDO)
+  valorTotal       Float
+  sinalPago        Float       @default(0)
+  dataEntrega      DateTime?
+  observacoes      String?
+  criadoEm         DateTime    @default(now())
+  atualizadoEm     DateTime    @updatedAt
+
+  @@map("ordens_servico")
+}
+
+// ---------------------------------------------------------------------------
+// Vendas
+// ---------------------------------------------------------------------------
+
+enum CategoriaVenda {
+  OCULOS_COMPLETO
+  SO_ARMACAO
+  SO_LENTE
+  RELOGIO
+  CONSERTO_RELOGIO
+  BATERIA
+  ACESSORIO
+  OUTRO
+}
+
+enum CanalOrigem {
+  GOOGLE_MAPS
+  PASSOU_EM_FRENTE
+  INDICACAO
+  CLIENTE_ANTIGO
+  INSTAGRAM
+  SITE
+  OUTRO
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  OUTRO
+}
+
+enum StatusPagamento {
+  PAGO
+  PENDENTE
+  RECUSADO
+  CANCELADO
+}
+
+enum StatusFiscal {
+  NAO_EMITIDO
+  EMITIDO
+  ERRO
+}
+
+model Venda {
+  id              Int             @id @default(autoincrement())
+  dataVenda       DateTime
+  clienteNome     String?
+  categoria       CategoriaVenda
+  descricao       String
+  quantidade      Int             @default(1)
+  custoTotal      Float
+  valorVendido    Float
+  canalOrigem     CanalOrigem
+  formaPagamento  FormaPagamento  @default(OUTRO)
+  statusPagamento StatusPagamento @default(PAGO)
+  mercadoPagoOrderId String?      @unique
+  criadoEm        DateTime        @default(now())
+
+  // SAT Fiscal (CF-e) — resultado da emissão do cupom fiscal
+  satStatus       StatusFiscal @default(NAO_EMITIDO)
+  satChaveAcesso  String?      @unique
+  satNumeroSessao Int?
+  satXmlRetorno   String?
+  satMensagemErro String?
+  satEmitidoEm    DateTime?
+
+  armacaoId Int?
+  armacao   ArmacaoEstoque? @relation(fields: [armacaoId], references: [id])
+
+  relogioId Int?
+  relogio   RelogioEstoque? @relation(fields: [relogioId], references: [id])
+
+  lenteId Int?
+  lente   LenteEstoque? @relation(fields: [lenteId], references: [id])
+
+  funcionarioId Int?
+  funcionario   Funcionario? @relation(fields: [funcionarioId], references: [id])
+
+  @@map("vendas")
+}
+
+// ---------------------------------------------------------------------------
+// Despesas fixas
+// ---------------------------------------------------------------------------
+
+model DespesaFixa {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  valor        Float
+  ativo        Boolean  @default(true)
+  observacao   String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("despesas_fixas")
+}
+
+// ---------------------------------------------------------------------------
+// Configurações da loja
+// ---------------------------------------------------------------------------
+
+model Configuracao {
+  id           Int      @id @default(1)
+  nomeLoja     String   @default("Óticas Tanaka e Relojoaria")
+  endereco     String   @default("")
+  whatsapp     String   @default("")
+  metaDiaria   Float    @default(0)
+  metaMensal   Float    @default(0)
+
+  // Dados fiscais do emitente — bloco <emit> do CF-e-SAT. O endereço não entra
+  // aqui: o próprio equipamento preenche com os dados da ativação dele.
+  cnpj              String?
+  inscricaoEstadual String?
+
+  atualizadoEm DateTime @updatedAt
+
+  @@map("configuracao")
+}
+
+// ---------------------------------------------------------------------------
+// Funcionários (login por PIN)
+// ---------------------------------------------------------------------------
+
+model Funcionario {
+  id       Int      @id @default(autoincrement())
+  nome     String
+  pinHash  String
+  pinSalt  String
+  ativo    Boolean  @default(true)
+  isAdmin  Boolean  @default(false)
+  criadoEm DateTime @default(now())
+
+  vendas Venda[]
+
+  @@map("funcionarios")
+}

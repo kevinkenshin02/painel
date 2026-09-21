@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf7f2;
+  --foreground: #221d19;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-brand: var(--font-poppins);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d8cfc2;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------------
+   Tema escuro — sobrescreve as classes utilitárias de cor hexadecimal
+   fixa usadas em todo o app, sem precisar reescrever cada componente.
+   --------------------------------------------------------------------- */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #4a4038;
+}
+
+/* Superfícies */
+[data-theme="dark"] .bg-\[\#faf7f2\] {
+  background-color: #1c1815;
+}
+[data-theme="dark"] .bg-white {
+  background-color: #262019;
+}
+[data-theme="dark"] .bg-\[\#f7f1e6\] {
+  background-color: #2f2820;
+}
+[data-theme="dark"] .bg-\[\#fdf3f1\] {
+  background-color: #2a1917;
+}
+
+/* Bordas */
+[data-theme="dark"] .border-\[\#eee3d3\] {
+  border-color: #3a3226;
+}
+[data-theme="dark"] .border-\[\#f3ede4\] {
+  border-color: #322b21;
+}
+[data-theme="dark"] .border-\[\#e4dbcb\] {
+  border-color: #443a2c;
+}
+
+/* Texto */
+[data-theme="dark"] .text-\[\#221d19\] {
+  color: #f3ede4;
+}
+[data-theme="dark"] .text-\[\#4a4038\] {
+  color: #d9cfc3;
+}
+[data-theme="dark"] .text-\[\#8a8078\] {
+  color: #a89e93;
+}
+[data-theme="dark"] .text-\[\#6b6157\] {
+  color: #bdb3a7;
+}
+[data-theme="dark"] .text-\[\#c0472b\] {
+  color: #f0796a;
+}
+[data-theme="dark"] .text-\[\#8a6a1f\] {
+  color: #e0b25a;
+}
+[data-theme="dark"] .text-\[\#c98a1f\] {
+  color: #e0b25a;
+}
+[data-theme="dark"] .text-\[\#a5631a\] {
+  color: #d99a4e;
+}
+[data-theme="dark"] .text-\[\#3a8f5b\] {
+  color: #6fcf97;
+}
+[data-theme="dark"] .text-\[\#1a9c4f\] {
+  color: #4ad080;
+}
+
+/* Fundos de selos/badges */
+[data-theme="dark"] .bg-\[\#e3f1e8\] {
+  background-color: #1c3327;
+}
+[data-theme="dark"] .bg-\[\#f3ede4\] {
+  background-color: #33291f;
+}
+[data-theme="dark"] .bg-\[\#fdf0d5\] {
+  background-color: #3d2f14;
+}
+[data-theme="dark"] .bg-\[\#fde8e2\] {
+  background-color: #3d211c;
+}
+[data-theme="dark"] .bg-\[\#fdeccb\] {
+  background-color: #3a2a12;
+}
+[data-theme="dark"] .bg-\[\#e9f9ef\] {
+  background-color: #173a26;
+}
+
+/* Estados hover */
+[data-theme="dark"] .hover\:bg-\[\#f7f1e6\]:hover {
+  background-color: #362e24;
+}
+[data-theme="dark"] .hover\:bg-\[\#d7f4e1\]:hover {
+  background-color: #1f4a30;
+}
+[data-theme="dark"] .hover\:text-\[\#c0472b\]:hover {
+  color: #f0796a;
+}
