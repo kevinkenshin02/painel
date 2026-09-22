@@ -6,13 +6,10 @@ import {
   CanalOrigem,
   CategoriaVenda,
   FormaPagamento,
-  StatusFiscal,
   StatusPagamento,
 } from "@/generated/prisma/enums";
 import { criarCobrancaPoint, simularEventoCobranca } from "@/lib/mercadopago";
 import { getFuncionarioLogado } from "@/lib/currentUser";
-import { getSatDriver, parseRetornoVenda, RETORNO_VENDA_AUTORIZADA } from "@/lib/sat";
-import { buildCfeXml } from "@/lib/sat/cfeBuilder";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   const parsed = Number(value);
@@ -37,9 +34,10 @@ export async function criarVenda(formData: FormData) {
 
   const [tipoItem, idItemRaw] = itemEstoque.split(":");
   const idItem = Number(idItemRaw);
-  const ehCartaoNaMaquininha =
-    formaPagamento === FormaPagamento.CARTAO_CREDITO || formaPagamento === FormaPagamento.CARTAO_DEBITO;
-  const statusPagamento = ehCartaoNaMaquininha ? StatusPagamento.PENDENTE : StatusPagamento.PAGO;
+  const statusPagamento =
+    formaPagamento === FormaPagamento.CARTAO_MAQUININHA
+      ? StatusPagamento.PENDENTE
+      : StatusPagamento.PAGO;
   const funcionario = await getFuncionarioLogado();
   const funcionarioId = funcionario?.id ?? null;
 
@@ -142,7 +140,7 @@ export async function criarVenda(formData: FormData) {
     });
   });
 
-  if (ehCartaoNaMaquininha) {
+  if (formaPagamento === FormaPagamento.CARTAO_MAQUININHA) {
     try {
       const order = await criarCobrancaPoint({
         valor: valorVendido,
@@ -174,12 +172,6 @@ export async function excluirVenda(formData: FormData) {
     const venda = await tx.venda.findUnique({ where: { id } });
     if (!venda) throw new Error("Venda inválida.");
 
-    if (venda.satStatus === StatusFiscal.EMITIDO) {
-      throw new Error(
-        "Esta venda já teve cupom fiscal emitido e transmitido à SEFAZ — não dá para excluir pelo painel. O cancelamento precisa ser feito pelo processo fiscal, senão o painel fica diferente do que a Receita já registrou."
-      );
-    }
-
     if (venda.armacaoId) {
       await tx.armacaoEstoque.update({
         where: { id: venda.armacaoId },
@@ -205,63 +197,6 @@ export async function excluirVenda(formData: FormData) {
   revalidatePath("/vendas");
   revalidatePath("/estoque");
   revalidatePath("/");
-}
-
-export async function emitirCupomFiscal(formData: FormData) {
-  const logado = await getFuncionarioLogado();
-  if (!logado) throw new Error("Faça login para emitir cupom fiscal.");
-
-  const id = Number(formData.get("id"));
-  if (!id) throw new Error("Venda inválida.");
-
-  const [venda, config] = await Promise.all([
-    prisma.venda.findUnique({ where: { id } }),
-    prisma.configuracao.findUnique({ where: { id: 1 } }),
-  ]);
-
-  if (!venda) throw new Error("Venda inválida.");
-  if (venda.satStatus === StatusFiscal.EMITIDO) {
-    throw new Error("Esta venda já tem cupom fiscal emitido.");
-  }
-  if (venda.statusPagamento !== StatusPagamento.PAGO) {
-    throw new Error("Só dá para emitir cupom fiscal de venda paga.");
-  }
-
-  try {
-    const xml = buildCfeXml(venda, {
-      cnpj: config?.cnpj ?? null,
-      inscricaoEstadual: config?.inscricaoEstadual ?? null,
-    });
-
-    const resposta = await getSatDriver().enviarDadosVenda(xml);
-    if (resposta.codigo !== RETORNO_VENDA_AUTORIZADA) {
-      throw new Error(`SAT recusou a emissão (${resposta.codigo}): ${resposta.mensagem}`);
-    }
-
-    const { chaveConsulta, xmlBase64 } = parseRetornoVenda(resposta);
-    await prisma.venda.update({
-      where: { id },
-      data: {
-        satStatus: StatusFiscal.EMITIDO,
-        satChaveAcesso: chaveConsulta || null,
-        satNumeroSessao: Number(resposta.numeroSessao) || null,
-        satXmlRetorno: xmlBase64 || resposta.raw,
-        satMensagemErro: null,
-        satEmitidoEm: new Date(),
-      },
-    });
-  } catch (err) {
-    await prisma.venda.update({
-      where: { id },
-      data: {
-        satStatus: StatusFiscal.ERRO,
-        satMensagemErro: err instanceof Error ? err.message : String(err),
-      },
-    });
-    throw err;
-  }
-
-  revalidatePath("/vendas");
 }
 
 export async function simularPagamentoTeste(formData: FormData) {

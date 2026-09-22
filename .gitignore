@@ -47,3 +47,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# config local do Claude Code (permissões, etc.) — específica da máquina
+.claude/

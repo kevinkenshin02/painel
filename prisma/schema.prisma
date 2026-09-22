@@ -169,8 +169,7 @@ enum CanalOrigem {
 enum FormaPagamento {
   DINHEIRO
   PIX
-  CARTAO_CREDITO
-  CARTAO_DEBITO
+  CARTAO_MAQUININHA
   OUTRO
 }
 
@@ -179,12 +178,6 @@ enum StatusPagamento {
   PENDENTE
   RECUSADO
   CANCELADO
-}
-
-enum StatusFiscal {
-  NAO_EMITIDO
-  EMITIDO
-  ERRO
 }
 
 model Venda {
@@ -201,14 +194,6 @@ model Venda {
   statusPagamento StatusPagamento @default(PAGO)
   mercadoPagoOrderId String?      @unique
   criadoEm        DateTime        @default(now())
-
-  // SAT Fiscal (CF-e) — resultado da emissão do cupom fiscal
-  satStatus       StatusFiscal @default(NAO_EMITIDO)
-  satChaveAcesso  String?      @unique
-  satNumeroSessao Int?
-  satXmlRetorno   String?
-  satMensagemErro String?
-  satEmitidoEm    DateTime?
 
   armacaoId Int?
   armacao   ArmacaoEstoque? @relation(fields: [armacaoId], references: [id])
@@ -252,11 +237,6 @@ model Configuracao {
   whatsapp     String   @default("")
   metaDiaria   Float    @default(0)
   metaMensal   Float    @default(0)
-
-  // Dados fiscais do emitente — bloco <emit> do CF-e-SAT. O endereço não entra
-  // aqui: o próprio equipamento preenche com os dados da ativação dele.
-  cnpj              String?
-  inscricaoEstadual String?
 
   atualizadoEm DateTime @updatedAt
 

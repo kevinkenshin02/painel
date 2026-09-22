@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // koffi carrega binário nativo (.node) para falar com a DLL do SAT — não pode ser empacotado.
-  serverExternalPackages: ["koffi"],
+  /* config options here */
 };
 
 export default nextConfig;

@@ -29,8 +29,7 @@ export const CANAL_ORIGEM_LABELS: Record<CanalOrigem, string> = {
 export const FORMA_PAGAMENTO_LABELS: Record<FormaPagamento, string> = {
   DINHEIRO: "Dinheiro",
   PIX: "Pix",
-  CARTAO_CREDITO: "Cartão de crédito",
-  CARTAO_DEBITO: "Cartão de débito",
+  CARTAO_MAQUININHA: "Cartão (maquininha)",
   OUTRO: "Outro",
 };
 
