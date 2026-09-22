@@ -11,11 +11,13 @@ import {
 } from "./labels";
 import { ConfirmDeleteForm } from "@/components/ConfirmDeleteForm";
 import { PagamentoPendente } from "./PagamentoPendente";
+import { CupomFiscalCell } from "./CupomFiscalCell";
 import { StatusPagamento } from "@/generated/prisma/enums";
 import type {
   CanalOrigem,
   CategoriaVenda,
   FormaPagamento,
+  StatusFiscal,
 } from "@/generated/prisma/enums";
 
 type Venda = {
@@ -28,6 +30,8 @@ type Venda = {
   formaPagamento: FormaPagamento;
   valorVendido: number;
   statusPagamento: StatusPagamento;
+  satStatus: StatusFiscal;
+  satMensagemErro: string | null;
   funcionario: { nome: string } | null;
 };
 
@@ -81,13 +85,14 @@ export function VendasTable({
               <th className="px-5 py-3.5">Valor</th>
               <th className="px-5 py-3.5">Vendido por</th>
               <th className="px-5 py-3.5">Status</th>
+              <th className="px-5 py-3.5">Cupom fiscal</th>
               <th className="px-5 py-3.5" />
             </tr>
           </thead>
           <tbody>
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-8 text-center text-sm text-[#8a8078]">
+                <td colSpan={10} className="px-5 py-8 text-center text-sm text-[#8a8078]">
                   {vendas.length === 0
                     ? "Nenhuma venda registrada ainda."
                     : "Nenhuma venda encontrada para essa busca."}
@@ -118,6 +123,14 @@ export function VendasTable({
                       {STATUS_PAGAMENTO_LABELS[v.statusPagamento]}
                     </span>
                   )}
+                </td>
+                <td className="px-5 py-4">
+                  <CupomFiscalCell
+                    vendaId={v.id}
+                    satStatus={v.satStatus}
+                    satMensagemErro={v.satMensagemErro}
+                    statusPagamento={v.statusPagamento}
+                  />
                 </td>
                 <td className="px-5 py-4 text-right">
                   <ConfirmDeleteForm id={v.id} action={excluir} confirmMessage="Excluir esta venda?" />

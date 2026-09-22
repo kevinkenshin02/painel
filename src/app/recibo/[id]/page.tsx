@@ -5,7 +5,7 @@ import {
   STATUS_OS_LABELS,
   TIPO_SERVICO_LABELS,
 } from "../../(painel)/ordens-servico/labels";
-import { PrintButton } from "./PrintButton";
+import { PrintButton } from "@/components/PrintButton";
 
 export const dynamic = "force-dynamic";
 
