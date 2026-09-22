@@ -207,29 +207,24 @@ export async function excluirVenda(formData: FormData) {
   revalidatePath("/");
 }
 
-export type ResultadoEmissao = { ok?: boolean; erro?: string };
-
-export async function emitirCupomFiscal(
-  _prevState: ResultadoEmissao,
-  formData: FormData
-): Promise<ResultadoEmissao> {
+export async function emitirCupomFiscal(formData: FormData) {
   const logado = await getFuncionarioLogado();
-  if (!logado) return { erro: "Faça login para emitir cupom fiscal." };
+  if (!logado) throw new Error("Faça login para emitir cupom fiscal.");
 
   const id = Number(formData.get("id"));
-  if (!id) return { erro: "Venda inválida." };
+  if (!id) throw new Error("Venda inválida.");
 
   const [venda, config] = await Promise.all([
     prisma.venda.findUnique({ where: { id } }),
     prisma.configuracao.findUnique({ where: { id: 1 } }),
   ]);
 
-  if (!venda) return { erro: "Venda inválida." };
+  if (!venda) throw new Error("Venda inválida.");
   if (venda.satStatus === StatusFiscal.EMITIDO) {
-    return { erro: "Esta venda já tem cupom fiscal emitido." };
+    throw new Error("Esta venda já tem cupom fiscal emitido.");
   }
   if (venda.statusPagamento !== StatusPagamento.PAGO) {
-    return { erro: "Só dá para emitir cupom fiscal de venda paga." };
+    throw new Error("Só dá para emitir cupom fiscal de venda paga.");
   }
 
   try {
@@ -256,17 +251,17 @@ export async function emitirCupomFiscal(
       },
     });
   } catch (err) {
-    const mensagem = err instanceof Error ? err.message : String(err);
     await prisma.venda.update({
       where: { id },
-      data: { satStatus: StatusFiscal.ERRO, satMensagemErro: mensagem },
+      data: {
+        satStatus: StatusFiscal.ERRO,
+        satMensagemErro: err instanceof Error ? err.message : String(err),
+      },
     });
-    revalidatePath("/vendas");
-    return { erro: mensagem };
+    throw err;
   }
 
   revalidatePath("/vendas");
-  return { ok: true };
 }
 
 export async function simularPagamentoTeste(formData: FormData) {
