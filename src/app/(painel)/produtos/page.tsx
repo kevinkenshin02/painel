@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Package, PackagePlus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
@@ -48,6 +49,13 @@ export default async function ProdutosPage(props: PageProps<"/produtos">) {
           <span className="numero text-texto">{formatCurrency(ativos.reduce((s, p) => s + p.quantidade * p.precoVenda, 0))}</span>
         </Chip>
         {atencao > 0 && <Chip className="border-perigo/40 text-perigo">{atencao} zerados ou abaixo do mínimo</Chip>}
+        {produtos.some((p) => p.aConferir) && (
+          <Link href="/estoque/conferencia">
+            <Chip className="border-info/40 text-info hover:border-info">
+              {produtos.filter((p) => p.aConferir).length} da lista antiga a conferir
+            </Chip>
+          </Link>
+        )}
       </Cabecalho>
 
       <Cartao filete className="p-6">
@@ -73,6 +81,7 @@ export default async function ProdutosPage(props: PageProps<"/produtos">) {
             custoUnitario: isAdmin ? p.custoUnitario : 0,
             precoVenda: p.precoVenda,
             ativo: p.ativo,
+            aConferir: p.aConferir,
           }))}
         />
       </Cartao>

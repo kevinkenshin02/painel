@@ -80,6 +80,7 @@ model Fornecedor {
   atualizadoEm  DateTime  @updatedAt
 
   produtos Produto[]
+  notas    NotaEntrada[]
 
   @@map("fornecedores")
 }
@@ -124,6 +125,8 @@ model Produto {
   custoUnitario Float             @default(0)
   precoVenda    Float             @default(0)
   ativo         Boolean           @default(true)
+  /// veio de uma lista antiga (ex.: Le Store) e ainda não foi conferido na vitrine
+  aConferir     Boolean           @default(false)
   observacoes   String?
   criadoEm      DateTime          @default(now())
   atualizadoEm  DateTime          @updatedAt
@@ -131,9 +134,53 @@ model Produto {
   vendas     Venda[]
   movimentos MovimentoEstoque[]
   precos     HistoricoPreco[]
+  notaItens  NotaEntradaItem[]
 
   @@index([tipo, marca])
   @@map("produtos")
+}
+
+/// Nota fiscal de compra lançada pelo XML (entrada de estoque).
+model NotaEntrada {
+  id            Int               @id @default(autoincrement())
+  /// chave de acesso (44 números) — impede lançar a mesma nota duas vezes
+  chave         String?           @unique
+  numero        String
+  serie         String?
+  dataEmissao   DateTime?
+  fornecedorId  Int?
+  fornecedor    Fornecedor?       @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  valorProdutos Float             @default(0)
+  valorTotal    Float             @default(0)
+  /// parcelas (duplicatas) em JSON: [{ numero, vencimento, valor }] — viram contas a pagar
+  parcelas      String?
+  observacoes   String?
+  funcionarioId Int?
+  funcionario   Funcionario?      @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm      DateTime          @default(now())
+
+  itens NotaEntradaItem[]
+
+  @@map("notas_entrada")
+}
+
+model NotaEntradaItem {
+  id               Int         @id @default(autoincrement())
+  notaId           Int
+  nota             NotaEntrada @relation(fields: [notaId], references: [id], onDelete: Cascade)
+  produtoId        Int?
+  produto          Produto?    @relation(fields: [produtoId], references: [id], onDelete: SetNull)
+  codigoFornecedor String
+  descricao        String
+  ean              String?
+  ncm              String?
+  quantidade       Float
+  custoUnitario    Float
+  valorTotal       Float
+  /// false = item da nota que não entrou no estoque (brinde, expositor...)
+  lancado          Boolean     @default(true)
+
+  @@map("notas_entrada_itens")
 }
 
 enum TipoMovimento {
@@ -354,6 +401,7 @@ model Funcionario {
   vendas     Venda[]
   movimentos MovimentoEstoque[]
   precos     HistoricoPreco[]
+  notas      NotaEntrada[]
 
   @@map("funcionarios")
 }

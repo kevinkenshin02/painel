@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, History, Package, PackageSearch, TriangleAlert } from "lucide-react";
+import { Boxes, ClipboardCheck, FileUp, History, Package, PackageSearch, TriangleAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import { getFuncionarioLogado } from "@/lib/currentUser";
@@ -20,13 +20,14 @@ export default async function EstoquePage() {
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [produtos, movimentos] = await Promise.all([
+  const [produtos, movimentos, aConferir] = await Promise.all([
     prisma.produto.findMany({ where: { ativo: true }, orderBy: [{ tipo: "asc" }, { marca: "asc" }] }),
     prisma.movimentoEstoque.findMany({
       orderBy: { criadoEm: "desc" },
       take: 15,
       include: { produto: { select: { id: true, codigo: true, marca: true, descricao: true } }, funcionario: { select: { nome: true } } },
     }),
+    prisma.produto.count({ where: { aConferir: true } }),
   ]);
 
   const grupos = new Map<string, { tipo: TipoProduto; marca: string; produtos: number; pecas: number; custo: number; venda: number }>();
@@ -52,9 +53,19 @@ export default async function EstoquePage() {
         titulo="Posição do estoque"
         descricao="Quanto tem na loja, por tipo e marca. Vender pelo Painel já tira do estoque; cada entrada e ajuste fica registrado."
         acoes={
-          <BotaoLink href="/produtos" icone={Package}>
-            Lista de produtos
-          </BotaoLink>
+          <>
+            <BotaoLink href="/produtos" icone={Package}>
+              Lista de produtos
+            </BotaoLink>
+            <BotaoLink href="/estoque/conferencia" icone={ClipboardCheck}>
+              Conferir a vitrine
+            </BotaoLink>
+            {isAdmin && (
+              <BotaoLink href="/estoque/entrada-nota" variante="primario" icone={FileUp}>
+                Entrada por nota
+              </BotaoLink>
+            )}
+          </>
         }
       >
         <Chip>
@@ -71,6 +82,11 @@ export default async function EstoquePage() {
         <Chip className={atencao.length > 0 ? "border-perigo/40 text-perigo" : undefined}>
           {atencao.length} zerados ou abaixo do mínimo
         </Chip>
+        {aConferir > 0 && (
+          <Link href="/estoque/conferencia">
+            <Chip className="border-info/40 text-info hover:border-info">{aConferir} relógios da lista antiga a conferir</Chip>
+          </Link>
+        )}
       </Cabecalho>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">

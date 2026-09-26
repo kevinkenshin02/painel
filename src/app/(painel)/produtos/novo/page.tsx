@@ -10,7 +10,8 @@ import { Cartao, TituloCartao } from "@/components/ui/Cartao";
 
 export const dynamic = "force-dynamic";
 
-export default async function NovoProdutoPage() {
+export default async function NovoProdutoPage(props: PageProps<"/produtos/novo">) {
+  const { codigo } = (await props.searchParams) as { codigo?: string };
   const logado = await getFuncionarioLogado();
   if (!logado?.isAdmin) redirect("/produtos");
 
@@ -34,7 +35,7 @@ export default async function NovoProdutoPage() {
       />
       <Cartao filete className="p-6">
         <TituloCartao selo="Ficha" icone={PackagePlus} titulo="Dados do produto" className="mb-6" />
-        <ProdutoForm fornecedores={fornecedores} marcas={marcas} podeEditar />
+        <ProdutoForm fornecedores={fornecedores} marcas={marcas} podeEditar codigoInicial={codigo} />
       </Cartao>
     </>
   );

@@ -26,6 +26,7 @@ export type LinhaProduto = {
   custoUnitario: number;
   precoVenda: number;
   ativo: boolean;
+  aConferir: boolean;
 };
 
 export type FiltrosProdutos = { busca?: string; tipo?: string; marca?: string; fornecedor?: string; situacao?: string };
@@ -63,7 +64,8 @@ export function ProdutosTabela({
   // os zerados vão para o fim da lista (o resto segue a ordem tipo → marca → modelo)
   const filtrados = [...produtos].sort((a, b) => Number(a.quantidade <= 0) - Number(b.quantidade <= 0)).filter((p) => {
     if (situacao === "ativos" && !p.ativo) return false;
-    if (situacao === "inativos" && p.ativo) return false;
+    if (situacao === "inativos" && (p.ativo || p.aConferir)) return false;
+    if (situacao === "conferir" && !p.aConferir) return false;
     if (situacao === "atencao" && !precisaAtencao(p)) return false;
     if (tipo && p.tipo !== tipo) return false;
     if (marca && p.marca !== marca) return false;
@@ -119,6 +121,7 @@ export function ProdutosTabela({
         <select value={situacao} onChange={(e) => setSituacao(e.target.value)} aria-label="Situação" className={classeFiltro}>
           <option value="ativos">Ativos</option>
           <option value="atencao">Zerados / abaixo do mínimo</option>
+          <option value="conferir">Lista antiga (a conferir)</option>
           <option value="inativos">Inativos</option>
           <option value="todos">Todos</option>
         </select>
@@ -175,7 +178,9 @@ export function ProdutosTabela({
                     <td className={cx("direita numero", margem < 0 && "text-perigo")}>{p.custoUnitario > 0 ? formatPercent(margem) : "—"}</td>
                   )}
                   <td>
-                    {!p.ativo ? (
+                    {p.aConferir ? (
+                      <Etiqueta tom="info">A conferir</Etiqueta>
+                    ) : !p.ativo ? (
                       <Etiqueta>Inativo</Etiqueta>
                     ) : p.quantidade <= 0 ? (
                       <Etiqueta tom="perigo">Zerado</Etiqueta>

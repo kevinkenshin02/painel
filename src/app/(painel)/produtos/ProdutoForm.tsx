@@ -51,11 +51,14 @@ export function ProdutoForm({
   fornecedores,
   marcas,
   podeEditar,
+  codigoInicial,
 }: {
   produto?: ProdutoEdicao;
   fornecedores: { id: number; nome: string }[];
   marcas: string[];
   podeEditar: boolean;
+  /** código bipado na conferência que não estava no Painel */
+  codigoInicial?: string;
 }) {
   const router = useRouter();
   const [tipo, setTipo] = useState<TipoProduto>(produto?.tipo ?? "RELOGIO");
@@ -96,10 +99,15 @@ export function ProdutoForm({
               </select>
             </Campo>
             <Campo rotulo="Código interno" dica="O que vai na etiqueta.">
-              <input name="codigo" required defaultValue={produto?.codigo} autoFocus={!produto} className={cx(classeCampo, "uppercase")} />
+              <input name="codigo" required defaultValue={produto?.codigo ?? codigoInicial} autoFocus={!produto} className={cx(classeCampo, "uppercase")} />
             </Campo>
             <Campo rotulo="Código de barras (EAN)">
-              <input name="codigoBarras" inputMode="numeric" defaultValue={produto?.codigoBarras ?? ""} className={classeCampo} />
+              <input
+                name="codigoBarras"
+                inputMode="numeric"
+                defaultValue={produto?.codigoBarras ?? (codigoInicial && /^\d{8,14}$/.test(codigoInicial) ? codigoInicial : "")}
+                className={classeCampo}
+              />
             </Campo>
             <Campo rotulo="Referência do fabricante" dica="Como aparece na nota do fornecedor.">
               <input name="referencia" defaultValue={produto?.referencia ?? ""} className={classeCampo} />

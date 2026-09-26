@@ -47,9 +47,9 @@ export const MENU: GrupoMenu[] = [
     icone: Package,
     itens: [
       { rotulo: "Posição do estoque", href: "/estoque" },
-      { rotulo: "Entrada por nota (XML)" },
-      { rotulo: "Conferência da vitrine" },
-      { rotulo: "Ajustes de estoque" },
+      { rotulo: "Entrada por nota (XML)", href: "/estoque/entrada-nota", admin: true },
+      { rotulo: "Conferência da vitrine", href: "/estoque/conferencia" },
+      { rotulo: "Ajustes e conferências", href: "/estoque/ajustes" },
     ],
   },
   {
