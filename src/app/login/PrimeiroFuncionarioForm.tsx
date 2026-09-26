@@ -2,6 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { criarPrimeiroFuncionario } from "./actions";
+import { Botao } from "@/components/ui/Botao";
+import { Campo, classeCampo } from "@/components/ui/Campo";
+import { Aviso } from "@/components/ui/Aviso";
 
 export function PrimeiroFuncionarioForm() {
   const [nome, setNome] = useState("");
@@ -23,19 +26,11 @@ export function PrimeiroFuncionarioForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="text-xs font-semibold text-[#8a8078]">Seu nome</span>
-        <input
-          type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          required
-          className="rounded-lg border border-[#e4dbcb] bg-white px-3 py-2.5 text-sm text-[#221d19]"
-        />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="text-xs font-semibold text-[#8a8078]">Crie um PIN (4 números)</span>
+    <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-sm flex-col gap-4">
+      <Campo rotulo="Seu nome">
+        <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required className={classeCampo} />
+      </Campo>
+      <Campo rotulo="Crie um PIN (4 a 6 números)">
         <input
           type="password"
           inputMode="numeric"
@@ -43,17 +38,13 @@ export function PrimeiroFuncionarioForm() {
           value={pin}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
           required
-          className="rounded-lg border border-[#e4dbcb] bg-white px-3 py-2.5 text-sm text-[#221d19] tracking-[0.3em]"
+          className={`${classeCampo} tracking-[0.3em]`}
         />
-      </label>
-      {erro && <p className="text-sm font-medium text-[#c0472b]">{erro}</p>}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-      >
+      </Campo>
+      {erro && <Aviso tom="perigo">{erro}</Aviso>}
+      <Botao type="submit" variante="primario" tamanho="lg" disabled={isPending}>
         {isPending ? "Criando..." : "Criar e entrar"}
-      </button>
+      </Botao>
     </form>
   );
 }

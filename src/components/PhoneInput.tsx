@@ -2,19 +2,20 @@
 
 import { useState } from "react";
 import { formatTelefone } from "@/lib/format";
+import { classeCampo } from "./ui/Campo";
 
 export function PhoneInput({
   name,
   defaultValue = "",
   required,
   placeholder,
-  className,
+  className = classeCampo,
 }: {
   name: string;
   defaultValue?: string;
   required?: boolean;
   placeholder?: string;
-  className: string;
+  className?: string;
 }) {
   const [value, setValue] = useState(formatTelefone(defaultValue));
 

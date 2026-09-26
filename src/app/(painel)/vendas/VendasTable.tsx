@@ -1,22 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { Search } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   CANAL_ORIGEM_LABELS,
   CATEGORIA_VENDA_LABELS,
   FORMA_PAGAMENTO_LABELS,
-  STATUS_PAGAMENTO_BADGE_CLASSES,
   STATUS_PAGAMENTO_LABELS,
+  STATUS_PAGAMENTO_TOM,
 } from "./labels";
 import { ConfirmDeleteForm } from "@/components/ConfirmDeleteForm";
 import { PagamentoPendente } from "./PagamentoPendente";
 import { StatusPagamento } from "@/generated/prisma/enums";
-import type {
-  CanalOrigem,
-  CategoriaVenda,
-  FormaPagamento,
-} from "@/generated/prisma/enums";
+import type { CanalOrigem, CategoriaVenda, FormaPagamento } from "@/generated/prisma/enums";
+import { Etiqueta } from "@/components/ui/Etiqueta";
+import { classeCampo } from "@/components/ui/Campo";
+import { cx } from "@/components/ui/cx";
 
 type Venda = {
   id: number;
@@ -35,10 +35,14 @@ export function VendasTable({
   vendas,
   excluir,
   modoTeste,
+  mostrarBusca = true,
+  vazio = "Nenhuma venda registrada ainda.",
 }: {
   vendas: Venda[];
   excluir: (formData: FormData) => void;
   modoTeste: boolean;
+  mostrarBusca?: boolean;
+  vazio?: string;
 }) {
   const [busca, setBusca] = useState("");
 
@@ -59,72 +63,86 @@ export function VendasTable({
       )
     : vendas;
 
-  return (
-    <div className="flex flex-col gap-3">
-      <input
-        type="text"
-        value={busca}
-        onChange={(event) => setBusca(event.target.value)}
-        placeholder="Buscar por cliente, descrição, canal ou forma de pagamento..."
-        className="w-full max-w-sm rounded-lg border border-[#e4dbcb] bg-white px-3 py-2 text-sm text-[#221d19]"
-      />
+  const pagas = filtradas.filter((v) => v.statusPagamento === StatusPagamento.PAGO);
+  const totalPago = pagas.reduce((s, v) => s + v.valorVendido, 0);
 
-      <div className="overflow-x-auto rounded-xl border border-[#eee3d3] bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#f7f1e6]">
-            <tr className="text-left text-xs font-bold tracking-wide text-[#8a8078] uppercase">
-              <th className="px-5 py-3.5">Data</th>
-              <th className="px-5 py-3.5">Cliente</th>
-              <th className="px-5 py-3.5">Descrição</th>
-              <th className="px-5 py-3.5">Canal</th>
-              <th className="px-5 py-3.5">Pagamento</th>
-              <th className="px-5 py-3.5">Valor</th>
-              <th className="px-5 py-3.5">Vendido por</th>
-              <th className="px-5 py-3.5">Status</th>
-              <th className="px-5 py-3.5" />
+  return (
+    <div className="flex flex-col gap-4">
+      {mostrarBusca && (
+        <label className="relative block max-w-md">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-suave" aria-hidden />
+          <input
+            type="text"
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Buscar por cliente, descrição, canal ou pagamento..."
+            className={cx(classeCampo, "pl-10")}
+          />
+        </label>
+      )}
+
+      <div className="overflow-x-auto rounded-xl border border-borda">
+        <table className="tabela">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th>Descrição</th>
+              <th>Canal</th>
+              <th>Pagamento</th>
+              <th className="direita">Valor</th>
+              <th>Vendido por</th>
+              <th>Situação</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-8 text-center text-sm text-[#8a8078]">
-                  {vendas.length === 0
-                    ? "Nenhuma venda registrada ainda."
-                    : "Nenhuma venda encontrada para essa busca."}
+                <td colSpan={9} className="py-10 text-center text-suave">
+                  {vendas.length === 0 ? vazio : "Nenhuma venda encontrada para essa busca."}
                 </td>
               </tr>
             )}
             {filtradas.map((v) => (
-              <tr key={v.id} className="border-t border-[#f3ede4]">
-                <td className="px-5 py-4 text-[#4a4038]">{formatDate(v.dataVenda)}</td>
-                <td className="px-5 py-4 font-semibold text-[#221d19]">
-                  {v.clienteNome || "—"}
+              <tr key={v.id}>
+                <td className="numero">{formatDate(v.dataVenda)}</td>
+                <td className="destaque">{v.clienteNome || "—"}</td>
+                <td>
+                  <div className="text-texto">{v.descricao}</div>
+                  <div className="text-xs text-suave">{CATEGORIA_VENDA_LABELS[v.categoria]}</div>
                 </td>
-                <td className="px-5 py-4 text-[#4a4038]">
-                  {v.descricao}
-                  <div className="text-xs text-[#8a8078]">{CATEGORIA_VENDA_LABELS[v.categoria]}</div>
-                </td>
-                <td className="px-5 py-4 text-[#4a4038]">{CANAL_ORIGEM_LABELS[v.canalOrigem]}</td>
-                <td className="px-5 py-4 text-[#4a4038]">{FORMA_PAGAMENTO_LABELS[v.formaPagamento]}</td>
-                <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(v.valorVendido)}</td>
-                <td className="px-5 py-4 text-[#4a4038]">{v.funcionario?.nome ?? "—"}</td>
-                <td className="px-5 py-4">
+                <td>{CANAL_ORIGEM_LABELS[v.canalOrigem]}</td>
+                <td>{FORMA_PAGAMENTO_LABELS[v.formaPagamento]}</td>
+                <td className="direita numero destaque">{formatCurrency(v.valorVendido)}</td>
+                <td>{v.funcionario?.nome ?? "—"}</td>
+                <td>
                   {v.statusPagamento === StatusPagamento.PENDENTE ? (
                     <PagamentoPendente vendaId={v.id} modoTeste={modoTeste} />
                   ) : (
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_PAGAMENTO_BADGE_CLASSES[v.statusPagamento]}`}
-                    >
-                      {STATUS_PAGAMENTO_LABELS[v.statusPagamento]}
-                    </span>
+                    <Etiqueta tom={STATUS_PAGAMENTO_TOM[v.statusPagamento]}>{STATUS_PAGAMENTO_LABELS[v.statusPagamento]}</Etiqueta>
                   )}
                 </td>
-                <td className="px-5 py-4 text-right">
-                  <ConfirmDeleteForm id={v.id} action={excluir} confirmMessage="Excluir esta venda?" />
+                <td className="direita">
+                  <ConfirmDeleteForm id={v.id} action={excluir} confirmMessage="Excluir esta venda? O item volta para o estoque." compacto />
                 </td>
               </tr>
             ))}
           </tbody>
+          {filtradas.length > 0 && (
+            <tfoot>
+              <tr>
+                <td colSpan={5}>
+                  Totais · {pagas.length} {pagas.length === 1 ? "venda paga" : "vendas pagas"}
+                  {pagas.length !== filtradas.length && (
+                    <span className="font-medium text-suave"> (de {filtradas.length} na lista)</span>
+                  )}
+                </td>
+                <td className="direita numero">{formatCurrency(totalPago)}</td>
+                <td colSpan={3} />
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

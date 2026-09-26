@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import { semEstoque } from "@/lib/estoque";
 import { editarRelogio } from "./actions";
 import { ToggleAtivoButton } from "@/components/ToggleAtivoButton";
 import { ConfirmDeleteForm } from "@/components/ConfirmDeleteForm";
@@ -13,7 +14,7 @@ const PUBLICOS_RELOGIO = Object.keys(PUBLICO_RELOGIO_LABELS) as PublicoRelogio[]
 const MECANISMOS_RELOGIO = Object.keys(MECANISMO_RELOGIO_LABELS) as MecanismoRelogio[];
 
 const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-2.5 py-1.5 text-sm text-[#221d19]";
+  "rounded-lg border border-borda bg-superficie px-2.5 py-1.5 text-sm text-texto focus:border-ouro focus:outline-none";
 
 type Relogio = {
   id: number;
@@ -54,11 +55,11 @@ export function RelogioRow({
 
   if (editando && isAdmin) {
     return (
-      <tr className="border-t border-[#f3ede4] bg-[#f7f1e6]">
-        <td colSpan={9} className="px-5 py-4">
+      <tr className="bg-superficie-2">
+        <td colSpan={9} >
           <form action={handleSalvar} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Código</span>
+              <span className="font-semibold text-suave">Código</span>
               <input
                 type="text"
                 name="codigo"
@@ -68,7 +69,7 @@ export function RelogioRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Marca</span>
+              <span className="font-semibold text-suave">Marca</span>
               <select
                 name="marca"
                 value={marcaEdicao}
@@ -84,7 +85,7 @@ export function RelogioRow({
             </label>
             {marcaEdicao === "OUTRO" && (
               <label className="flex flex-col gap-1 text-xs">
-                <span className="font-semibold text-[#8a8078]">Qual marca?</span>
+                <span className="font-semibold text-suave">Qual marca?</span>
                 <input
                   type="text"
                   name="marcaOutro"
@@ -94,7 +95,7 @@ export function RelogioRow({
               </label>
             )}
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Modelo / referência</span>
+              <span className="font-semibold text-suave">Modelo / referência</span>
               <input
                 type="text"
                 name="modeloReferencia"
@@ -104,7 +105,7 @@ export function RelogioRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Público</span>
+              <span className="font-semibold text-suave">Público</span>
               <select name="tipoPublico" defaultValue={relogio.tipoPublico} className={inputClass}>
                 {PUBLICOS_RELOGIO.map((p) => (
                   <option key={p} value={p}>
@@ -114,7 +115,7 @@ export function RelogioRow({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Mecanismo</span>
+              <span className="font-semibold text-suave">Mecanismo</span>
               <select name="tipoMecanismo" defaultValue={relogio.tipoMecanismo} className={inputClass}>
                 {MECANISMOS_RELOGIO.map((m) => (
                   <option key={m} value={m}>
@@ -124,7 +125,7 @@ export function RelogioRow({
               </select>
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Fornecedor</span>
+              <span className="font-semibold text-suave">Fornecedor</span>
               <input
                 type="text"
                 name="fornecedor"
@@ -134,7 +135,7 @@ export function RelogioRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Quantidade</span>
+              <span className="font-semibold text-suave">Quantidade</span>
               <input
                 type="number"
                 name="quantidade"
@@ -145,7 +146,7 @@ export function RelogioRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Custo unitário (R$)</span>
+              <span className="font-semibold text-suave">Custo unitário (R$)</span>
               <input
                 type="number"
                 name="custoUnitario"
@@ -157,7 +158,7 @@ export function RelogioRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Preço de venda (R$)</span>
+              <span className="font-semibold text-suave">Preço de venda (R$)</span>
               <input
                 type="number"
                 name="precoVenda"
@@ -170,14 +171,14 @@ export function RelogioRow({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-4 py-2 text-xs font-bold text-white"
+              className="degrade-sol rounded-lg px-4 py-2 text-xs font-bold text-sobre-sol"
             >
               Salvar
             </button>
             <button
               type="button"
               onClick={() => setEditando(false)}
-              className="rounded-lg border border-[#e4dbcb] px-4 py-2 text-xs font-semibold text-[#4a4038] hover:bg-white"
+              className="rounded-lg border border-borda px-4 py-2 text-xs font-semibold text-texto-2 hover:bg-superficie-3"
             >
               Cancelar
             </button>
@@ -188,21 +189,24 @@ export function RelogioRow({
   }
 
   return (
-    <tr className="border-t border-[#f3ede4]">
-      <td className="px-5 py-4 font-semibold text-[#221d19]">{relogio.codigo}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{nomeMarca}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{relogio.modeloReferencia}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{PUBLICO_RELOGIO_LABELS[relogio.tipoPublico]}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{MECANISMO_RELOGIO_LABELS[relogio.tipoMecanismo]}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{relogio.quantidade}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(relogio.precoVenda)}</td>
-      <td className="px-5 py-4">
+    <tr>
+      <td className="destaque whitespace-nowrap">{relogio.codigo}</td>
+      <td>{nomeMarca}</td>
+      <td>{relogio.modeloReferencia}</td>
+      <td>{PUBLICO_RELOGIO_LABELS[relogio.tipoPublico]}</td>
+      <td>{MECANISMO_RELOGIO_LABELS[relogio.tipoMecanismo]}</td>
+      <td className="numero">
+        <span className={semEstoque(relogio) ? "font-bold text-perigo" : "text-texto"}>{relogio.quantidade}</span>
+        {semEstoque(relogio) && <span className="ml-1.5 rounded-full bg-perigo-fundo px-1.5 py-px text-[10px] font-bold text-perigo uppercase">zerado</span>}
+      </td>
+      <td className="numero">{formatCurrency(relogio.precoVenda)}</td>
+      <td>
         {isAdmin ? (
           <ToggleAtivoButton id={relogio.id} ativo={relogio.ativo} action={alternarAtivo} />
         ) : (
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-              relogio.ativo ? "bg-[#e3f1e8] text-[#3a8f5b]" : "bg-[#f3ede4] text-[#8a8078]"
+              relogio.ativo ? "bg-sucesso-fundo text-sucesso" : "bg-superficie-3 text-suave"
             }`}
           >
             {relogio.ativo ? "Ativo" : "Inativo"}
@@ -210,12 +214,12 @@ export function RelogioRow({
         )}
       </td>
       {isAdmin && (
-        <td className="px-5 py-4 text-right">
+        <td className="direita">
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setEditando(true)}
-              className="text-xs font-semibold text-[#8a8078] hover:text-[#221d19] hover:underline"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-suave transition hover:bg-superficie-3 hover:text-texto"
             >
               Editar
             </button>

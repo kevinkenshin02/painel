@@ -1,22 +1,24 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState } from "react";
+import { UserPlus } from "lucide-react";
 import { criarFuncionario, alternarAtivoFuncionario } from "./actions";
 import { ToggleAtivoButton } from "@/components/ToggleAtivoButton";
-
-const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-3 py-2.5 text-sm text-[#221d19]";
+import { Botao } from "@/components/ui/Botao";
+import { Campo, classeCampo } from "@/components/ui/Campo";
+import { Aviso } from "@/components/ui/Aviso";
+import { Etiqueta } from "@/components/ui/Etiqueta";
 
 type Funcionario = {
   id: number;
   nome: string;
   ativo: boolean;
+  isAdmin: boolean;
 };
 
 const ESTADO_INICIAL: { erro?: string; ok?: boolean; nomeAdicionado?: string } = {};
 
 export function FuncionariosSection({ funcionarios }: { funcionarios: Funcionario[] }) {
-  const [estado, formAction, isPending] = useActionState(criarFuncionario, ESTADO_INICIAL);
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
 
@@ -24,31 +26,27 @@ export function FuncionariosSection({ funcionarios }: { funcionarios: Funcionari
   // limpo pelo React assim que a submissão termina, mesmo quando a ação
   // retorna um erro (ex: PIN repetido) — obrigando a pessoa a redigitar
   // tudo de novo sem entender por quê. Só limpamos manualmente no sucesso.
-  useEffect(() => {
-    if (estado.ok) {
-      setNome("");
-      setPin("");
-    }
-  }, [estado]);
+  const [estado, formAction, isPending] = useActionState(
+    async (anterior: typeof ESTADO_INICIAL, formData: FormData) => {
+      const resultado = await criarFuncionario(anterior, formData);
+      if (resultado.ok) {
+        setNome("");
+        setPin("");
+      }
+      return resultado;
+    },
+    ESTADO_INICIAL
+  );
 
   return (
     <div className="flex flex-col gap-4">
-      <form action={formAction} className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-xs font-semibold text-[#8a8078]">Nome</span>
+      <form action={formAction} className="grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_12rem_auto]">
+        <Campo rotulo="Nome">
+          <input type="text" name="nome" value={nome} onChange={(e) => setNome(e.target.value)} required className={classeCampo} />
+        </Campo>
+        <Campo rotulo="PIN (4 a 6 números)">
           <input
-            type="text"
-            name="nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-xs font-semibold text-[#8a8078]">PIN (4 a 6 números)</span>
-          <input
-            type="text"
+            type="password"
             name="pin"
             inputMode="numeric"
             autoComplete="off"
@@ -58,49 +56,42 @@ export function FuncionariosSection({ funcionarios }: { funcionarios: Funcionari
             title="4 a 6 números"
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-            className={`${inputClass} tracking-[0.3em]`}
+            className={`${classeCampo} tracking-[0.3em]`}
           />
-        </label>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-        >
-          {isPending ? "Criando..." : "Adicionar funcionário"}
-        </button>
+        </Campo>
+        <Botao type="submit" variante="primario" icone={UserPlus} disabled={isPending} className="h-[42px]">
+          {isPending ? "Criando..." : "Adicionar"}
+        </Botao>
       </form>
-      {estado.erro && (
-        <p className="rounded-lg border border-[#fde8e2] bg-[#fde8e2] px-4 py-2.5 text-sm font-semibold text-[#c0472b]">
-          {estado.erro}
-        </p>
-      )}
+      {estado.erro && <Aviso tom="perigo">{estado.erro}</Aviso>}
       {estado.ok && (
-        <p className="rounded-lg border border-[#e3f1e8] bg-[#e3f1e8] px-4 py-2.5 text-sm font-semibold text-[#3a8f5b]">
-          &quot;{estado.nomeAdicionado}&quot; foi adicionado — já aparece na lista abaixo e pode
-          fazer login com o PIN cadastrado.
-        </p>
+        <Aviso tom="sucesso">
+          &quot;{estado.nomeAdicionado}&quot; foi adicionado e já pode entrar com o PIN cadastrado.
+        </Aviso>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-[#eee3d3]">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#f7f1e6]">
-            <tr className="text-left text-xs font-bold tracking-wide text-[#8a8078] uppercase">
-              <th className="px-5 py-3">Nome</th>
-              <th className="px-5 py-3">Status</th>
+      <div className="overflow-x-auto rounded-xl border border-borda">
+        <table className="tabela">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Acesso</th>
+              <th>Situação</th>
             </tr>
           </thead>
           <tbody>
             {funcionarios.length === 0 && (
               <tr>
-                <td colSpan={2} className="px-5 py-6 text-center text-sm text-[#8a8078]">
+                <td colSpan={3} className="py-8 text-center text-suave">
                   Nenhum funcionário cadastrado.
                 </td>
               </tr>
             )}
             {funcionarios.map((f) => (
-              <tr key={f.id} className="border-t border-[#f3ede4]">
-                <td className="px-5 py-3 font-medium text-[#221d19]">{f.nome}</td>
-                <td className="px-5 py-3">
+              <tr key={f.id}>
+                <td className="destaque">{f.nome}</td>
+                <td>{f.isAdmin ? <Etiqueta tom="ouro">Administrador</Etiqueta> : <Etiqueta>Funcionário</Etiqueta>}</td>
+                <td>
                   <ToggleAtivoButton id={f.id} ativo={f.ativo} action={alternarAtivoFuncionario} />
                 </td>
               </tr>
@@ -108,9 +99,8 @@ export function FuncionariosSection({ funcionarios }: { funcionarios: Funcionari
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-[#8a8078]">
-        Desativar um funcionário impede o login dele, mas mantém o histórico de vendas já
-        registradas em nome dele.
+      <p className="text-xs text-suave">
+        Desativar um funcionário impede a entrada dele, mas mantém o histórico de vendas registradas em nome dele.
       </p>
     </div>
   );

@@ -7,7 +7,7 @@ import { ConfirmDeleteForm } from "@/components/ConfirmDeleteForm";
 import { ToggleAtivoButton } from "@/components/ToggleAtivoButton";
 
 const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-2.5 py-1.5 text-sm text-[#221d19]";
+  "rounded-lg border border-borda bg-superficie px-2.5 py-1.5 text-sm text-texto focus:border-ouro focus:outline-none";
 
 type Despesa = {
   id: number;
@@ -36,15 +36,15 @@ export function DespesaFixaRow({
 
   if (editando) {
     return (
-      <tr className="border-t border-[#f3ede4] bg-[#f7f1e6]">
-        <td colSpan={5} className="px-5 py-4">
+      <tr className="bg-superficie-2">
+        <td colSpan={5}>
           <form action={handleSalvar} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Nome</span>
+              <span className="font-semibold text-suave">Nome</span>
               <input type="text" name="nome" required defaultValue={despesa.nome} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Valor mensal (R$)</span>
+              <span className="font-semibold text-suave">Valor mensal (R$)</span>
               <input
                 type="number"
                 name="valor"
@@ -56,7 +56,7 @@ export function DespesaFixaRow({
               />
             </label>
             <label className="flex flex-1 min-w-[180px] flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Observação</span>
+              <span className="font-semibold text-suave">Observação</span>
               <input
                 type="text"
                 name="observacao"
@@ -66,14 +66,14 @@ export function DespesaFixaRow({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-4 py-2 text-xs font-bold text-white"
+              className="degrade-sol rounded-lg px-4 py-2 text-xs font-bold text-sobre-sol"
             >
               Salvar
             </button>
             <button
               type="button"
               onClick={() => setEditando(false)}
-              className="rounded-lg border border-[#e4dbcb] px-4 py-2 text-xs font-semibold text-[#4a4038] hover:bg-white"
+              className="rounded-lg border border-borda px-4 py-2 text-xs font-semibold text-texto-2 hover:bg-superficie-3"
             >
               Cancelar
             </button>
@@ -84,19 +84,19 @@ export function DespesaFixaRow({
   }
 
   return (
-    <tr className="border-t border-[#f3ede4]">
-      <td className="px-5 py-4 font-semibold text-[#221d19]">{despesa.nome}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(despesa.valor)}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{despesa.observacao || "—"}</td>
-      <td className="px-5 py-4">
+    <tr>
+      <td className="destaque">{despesa.nome}</td>
+      <td className="numero">{formatCurrency(despesa.valor)}</td>
+      <td >{despesa.observacao || "—"}</td>
+      <td>
         <ToggleAtivoButton id={despesa.id} ativo={despesa.ativo} action={alternarAtivo} />
       </td>
-      <td className="px-5 py-4 text-right">
+      <td className="direita">
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => setEditando(true)}
-            className="text-xs font-semibold text-[#8a8078] hover:text-[#221d19] hover:underline"
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-suave transition hover:bg-superficie-3 hover:text-texto"
           >
             Editar
           </button>

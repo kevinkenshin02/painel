@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { Printer, Search } from "lucide-react";
 import { formatCurrency, formatDate, formatTelefone } from "@/lib/format";
-import { STATUS_OS_BADGE_CLASSES, STATUS_OS_LABELS, TIPO_SERVICO_LABELS } from "./labels";
+import { STATUS_OS_LABELS, STATUS_OS_TOM, TIPO_SERVICO_LABELS } from "./labels";
 import { StatusSelect } from "./StatusSelect";
 import { DeleteButton } from "./DeleteButton";
 import { AvisarClienteButton } from "./AvisarClienteButton";
 import type { StatusOS, TipoServico } from "@/generated/prisma/enums";
+import { Etiqueta } from "@/components/ui/Etiqueta";
+import { classeCampo } from "@/components/ui/Campo";
+import { cx } from "@/components/ui/cx";
 
 type OrdemServico = {
   id: number;
@@ -28,40 +32,44 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
     ? ativas.filter((os) => {
         const texto = `#${os.id} ${os.clienteNome}`.toLowerCase();
         const telefoneDigits = os.clienteWhatsapp.replace(/\D/g, "");
-        return (
-          texto.includes(termo) || (termoDigits && telefoneDigits.includes(termoDigits))
-        );
+        return texto.includes(termo) || (termoDigits && telefoneDigits.includes(termoDigits));
       })
     : ativas;
 
-  return (
-    <div className="flex flex-col gap-3">
-      <input
-        type="text"
-        value={busca}
-        onChange={(event) => setBusca(event.target.value)}
-        placeholder="Buscar por nº da OS, cliente ou telefone..."
-        className="w-full max-w-sm rounded-lg border border-[#e4dbcb] bg-white px-3 py-2 text-sm text-[#221d19]"
-      />
+  const total = filtradas.reduce((s, os) => s + os.valorTotal, 0);
+  const restante = filtradas.reduce((s, os) => s + (os.valorTotal - os.sinalPago), 0);
 
-      <div className="overflow-x-auto rounded-xl border border-[#eee3d3] bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#f7f1e6]">
-            <tr className="text-left text-xs font-bold tracking-wide text-[#8a8078] uppercase">
-              <th className="px-5 py-3.5">Nº OS</th>
-              <th className="px-5 py-3.5">Cliente</th>
-              <th className="px-5 py-3.5">Serviço</th>
-              <th className="px-5 py-3.5">Prazo</th>
-              <th className="px-5 py-3.5">Status</th>
-              <th className="px-5 py-3.5">Total</th>
-              <th className="px-5 py-3.5">Restante</th>
-              <th className="px-5 py-3.5" />
+  return (
+    <div className="flex flex-col gap-4">
+      <label className="relative block max-w-md">
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-suave" aria-hidden />
+        <input
+          type="text"
+          value={busca}
+          onChange={(event) => setBusca(event.target.value)}
+          placeholder="Buscar por nº da OS, cliente ou telefone..."
+          className={cx(classeCampo, "pl-10")}
+        />
+      </label>
+
+      <div className="overflow-x-auto rounded-xl border border-borda">
+        <table className="tabela">
+          <thead>
+            <tr>
+              <th>Nº OS</th>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Prazo</th>
+              <th>Situação</th>
+              <th className="direita">Total</th>
+              <th className="direita">Falta pagar</th>
+              <th className="direita">Ações</th>
             </tr>
           </thead>
           <tbody>
             {filtradas.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-8 text-center text-sm text-[#8a8078]">
+                <td colSpan={8} className="py-10 text-center text-suave">
                   {ativas.length === 0
                     ? "Nenhuma ordem de serviço em andamento."
                     : "Nenhuma ordem de serviço encontrada para essa busca."}
@@ -71,42 +79,27 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
             {filtradas.map((os) => {
               const atrasada = os.prazoPrometido < hoje;
               return (
-                <tr
-                  key={os.id}
-                  className={`border-t border-[#f3ede4] ${atrasada ? "bg-[#fdf3f1]" : ""}`}
-                >
-                  <td className="px-5 py-4 font-semibold text-[#221d19]">#{os.id}</td>
-                  <td className="px-5 py-4">
-                    <div className="font-semibold text-[#221d19]">{os.clienteNome}</div>
-                    <div className="text-xs text-[#8a8078]">{formatTelefone(os.clienteWhatsapp)}</div>
+                <tr key={os.id} className={atrasada ? "[&>td:first-child]:shadow-[inset_3px_0_0_var(--perigo)]" : undefined}>
+                  <td className="destaque numero">#{os.id}</td>
+                  <td>
+                    <div className="font-semibold text-texto">{os.clienteNome}</div>
+                    <div className="numero text-xs whitespace-nowrap text-suave">{formatTelefone(os.clienteWhatsapp)}</div>
                   </td>
-                  <td className="px-5 py-4 text-[#4a4038]">
-                    {TIPO_SERVICO_LABELS[os.tipoServico]}
+                  <td className="whitespace-nowrap">{TIPO_SERVICO_LABELS[os.tipoServico]}</td>
+                  <td className="whitespace-nowrap">
+                    <span className={cx("numero", atrasada && "font-bold text-perigo")}>{formatDate(os.prazoPrometido)}</span>
+                    {atrasada && <div className="text-xs font-semibold text-perigo">Atrasada</div>}
                   </td>
-                  <td className="px-5 py-4">
-                    <span className={atrasada ? "font-bold text-[#c0472b]" : "text-[#4a4038]"}>
-                      {formatDate(os.prazoPrometido)}
-                    </span>
-                    {atrasada && (
-                      <div className="text-xs font-medium text-[#c0472b]">Atrasada</div>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="mb-1.5">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_OS_BADGE_CLASSES[os.status]}`}
-                      >
-                        {STATUS_OS_LABELS[os.status]}
-                      </span>
+                  <td>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <Etiqueta tom={STATUS_OS_TOM[os.status]}>{STATUS_OS_LABELS[os.status]}</Etiqueta>
+                      <StatusSelect id={os.id} status={os.status} />
                     </div>
-                    <StatusSelect id={os.id} status={os.status} />
                   </td>
-                  <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(os.valorTotal)}</td>
-                  <td className="px-5 py-4 text-[#4a4038]">
-                    {formatCurrency(os.valorTotal - os.sinalPago)}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex flex-col items-end gap-1.5">
+                  <td className="direita numero">{formatCurrency(os.valorTotal)}</td>
+                  <td className="direita numero destaque">{formatCurrency(os.valorTotal - os.sinalPago)}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-1">
                       <AvisarClienteButton
                         id={os.id}
                         clienteNome={os.clienteNome}
@@ -117,9 +110,11 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
                         href={`/recibo/${os.id}`}
                         target="_blank"
                         rel="noopener"
-                        className="text-xs font-semibold text-[#8a8078] hover:text-[#221d19] hover:underline"
+                        title="Imprimir comprovante"
+                        aria-label="Imprimir comprovante"
+                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-suave transition hover:bg-superficie-3 hover:text-texto"
                       >
-                        Comprovante
+                        <Printer className="h-3.5 w-3.5" aria-hidden />
                       </a>
                       <DeleteButton id={os.id} />
                     </div>
@@ -128,6 +123,18 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
               );
             })}
           </tbody>
+          {filtradas.length > 0 && (
+            <tfoot>
+              <tr>
+                <td colSpan={5}>
+                  Totais · {filtradas.length} {filtradas.length === 1 ? "ordem" : "ordens"}
+                </td>
+                <td className="direita numero">{formatCurrency(total)}</td>
+                <td className="direita numero">{formatCurrency(restante)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>

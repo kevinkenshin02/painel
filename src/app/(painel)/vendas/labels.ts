@@ -4,6 +4,7 @@ import {
   FormaPagamento,
   StatusPagamento,
 } from "@/generated/prisma/enums";
+import type { Tom } from "@/components/ui/Etiqueta";
 
 export const CATEGORIA_VENDA_LABELS: Record<CategoriaVenda, string> = {
   OCULOS_COMPLETO: "Óculos completo",
@@ -40,9 +41,9 @@ export const STATUS_PAGAMENTO_LABELS: Record<StatusPagamento, string> = {
   CANCELADO: "Cancelado",
 };
 
-export const STATUS_PAGAMENTO_BADGE_CLASSES: Record<StatusPagamento, string> = {
-  PAGO: "bg-[#e3f1e8] text-[#3a8f5b]",
-  PENDENTE: "bg-[#fdf0d5] text-[#c98a1f]",
-  RECUSADO: "bg-[#fde8e2] text-[#c0472b]",
-  CANCELADO: "bg-[#f3ede4] text-[#6b6157]",
+export const STATUS_PAGAMENTO_TOM: Record<StatusPagamento, Tom> = {
+  PAGO: "sucesso",
+  PENDENTE: "aviso",
+  RECUSADO: "perigo",
+  CANCELADO: "neutro",
 };

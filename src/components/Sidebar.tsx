@@ -1,124 +1,198 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import { ChevronRight, LogOut, Search, X } from "lucide-react";
 import { sair } from "@/app/login/actions";
+import { MENU, grupoAtivo, itemAtivo, type GrupoMenu } from "./menu";
+import { cx } from "./ui/cx";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Visão geral", adminOnly: false },
-  { href: "/vendas", label: "Vendas", adminOnly: false },
-  { href: "/estoque", label: "Estoque", adminOnly: false },
-  { href: "/ordens-servico", label: "Ordens de Serviço", adminOnly: false },
-  { href: "/despesas", label: "Despesas", adminOnly: true },
-] as const;
+function semAcento(texto: string) {
+  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 
-export function Sidebar({
-  nomeFuncionario,
-  isAdmin,
-}: {
-  nomeFuncionario: string;
-  isAdmin: boolean;
-}) {
+function iniciais(nome: string) {
+  const partes = nome.trim().split(/\s+/);
+  return partes.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
+}
+
+export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string; isAdmin: boolean }) {
   const pathname = usePathname();
+  const [busca, setBusca] = useState("");
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
 
-  const configuracoesAtivo = pathname === "/configuracoes";
-  const itensVisiveis = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+  const grupos = useMemo(() => {
+    const termo = semAcento(busca.trim());
+    const resultado: GrupoMenu[] = [];
+    for (const original of MENU) {
+      if (original.admin && !isAdmin) continue;
+      const g: GrupoMenu = { ...original, itens: original.itens?.filter((i) => !i.admin || isAdmin) };
+      if (!termo || semAcento(g.rotulo).includes(termo)) {
+        resultado.push(g);
+        continue;
+      }
+      const itens = g.itens?.filter((i) => semAcento(i.rotulo).includes(termo));
+      if (itens && itens.length > 0) resultado.push({ ...g, itens });
+    }
+    return resultado;
+  }, [busca, isAdmin]);
+
+  const buscando = busca.trim().length > 0;
+
+  function estaAberto(g: GrupoMenu) {
+    if (buscando) return true;
+    return abertos[g.id] ?? grupoAtivo(g, pathname);
+  }
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col gap-7 bg-[#221d19] px-4 py-6 text-[#f3ede4]">
-      <div className="flex items-center gap-3 px-2">
-        <div className="relative h-9 w-9 shrink-0">
-          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#f6b23b] to-[#e0472e]" />
-          <div className="absolute top-1.5 left-1 h-6 w-1 bg-[#221d19]" />
-          <div className="absolute top-1.5 right-1 h-6 w-1 bg-[#221d19]" />
-          <div className="absolute top-1 -left-0.5 h-[3px] w-10 bg-[#221d19]" />
-          <div className="absolute top-3 left-0 h-[3px] w-9 bg-[#221d19]" />
+    <aside className="nao-imprimir flex h-screen w-[272px] shrink-0 flex-col gap-4 border-r border-lat-borda bg-lat-fundo px-4 py-5 text-lat-texto">
+      <Link
+        href="/"
+        className="filete block rounded-2xl border border-lat-borda bg-lat-cartao px-5 pt-5 pb-4 transition hover:border-[rgba(224,166,61,0.4)]"
+      >
+        <Image
+          src="/marca/logo-tanaka.png"
+          alt="Tanaka Ótica e Relojoaria"
+          width={760}
+          height={155}
+          priority
+          unoptimized
+          className="h-auto w-full"
+        />
+        <div className="mt-3 text-center text-[10px] font-semibold tracking-[0.24em] text-lat-suave uppercase">
+          Painel de gestão
         </div>
-        <div>
-          <div
-            className="text-[17px] leading-none font-extrabold tracking-wide"
-            style={{ fontFamily: "var(--font-brand)" }}
+      </Link>
+
+      <label className="relative block">
+        <Search className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-lat-suave" aria-hidden />
+        <input
+          type="search"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar no menu..."
+          aria-label="Buscar no menu"
+          className="h-10 w-full rounded-xl border border-lat-borda bg-lat-cartao pr-9 pl-10 text-[13px] text-lat-texto placeholder:text-lat-suave/80 focus:border-[#e0a63d] focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+        />
+        {buscando && (
+          <button
+            type="button"
+            onClick={() => setBusca("")}
+            aria-label="Limpar busca"
+            className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1 text-lat-suave hover:text-lat-texto"
           >
-            TANAKA
-          </div>
-          <div className="mt-0.5 text-[9px] tracking-[0.15em] text-[#c9bfae] uppercase">
-            Ótica &amp; Relojoaria
-          </div>
-        </div>
-      </div>
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </label>
 
-      <nav className="flex flex-col gap-1">
-        {itensVisiveis.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <nav className="-mx-1 flex flex-1 flex-col gap-0.5 overflow-y-auto px-1 pb-2" aria-label="Menu principal">
+        {grupos.length === 0 && <p className="px-3 py-4 text-xs text-lat-suave">Nada encontrado.</p>}
+        {grupos.map((g) => {
+          const Icone = g.icone;
+          const ativo = grupoAtivo(g, pathname);
 
+          if (!g.itens) {
+            return (
+              <Link
+                key={g.id}
+                href={g.href ?? "/"}
+                aria-current={ativo ? "page" : undefined}
+                className={cx(
+                  "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-semibold transition",
+                  ativo
+                    ? "bg-[rgba(249,178,51,0.1)] text-[#f9b233] before:absolute before:top-2 before:bottom-2 before:left-0 before:w-[3px] before:rounded-full before:bg-[#f9b233]"
+                    : "text-lat-texto/85 hover:bg-white/5 hover:text-lat-texto"
+                )}
+              >
+                <Icone className="h-[18px] w-[18px] shrink-0" aria-hidden />
+                {g.rotulo}
+              </Link>
+            );
+          }
+
+          const aberto = estaAberto(g);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${
-                isActive
-                  ? "bg-[#e0472e]/20 font-bold text-[#f6b23b]"
-                  : "text-[#c9bfae] hover:bg-white/5 hover:text-[#f3ede4]"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                  isActive
-                    ? "bg-gradient-to-br from-[#f6b23b] to-[#e0472e]"
-                    : "bg-[#4a4038]"
-                }`}
-              />
-              {item.label}
-            </Link>
+            <div key={g.id}>
+              <button
+                type="button"
+                onClick={() => setAbertos((a) => ({ ...a, [g.id]: !aberto }))}
+                aria-expanded={aberto}
+                className={cx(
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13.5px] font-semibold transition",
+                  ativo ? "text-[#f9b233]" : "text-lat-texto/85 hover:bg-white/5 hover:text-lat-texto"
+                )}
+              >
+                <Icone className="h-[18px] w-[18px] shrink-0" aria-hidden />
+                <span className="flex-1">{g.rotulo}</span>
+                <ChevronRight
+                  className={cx("h-4 w-4 shrink-0 text-lat-suave transition-transform", aberto && "rotate-90")}
+                  aria-hidden
+                />
+              </button>
+              {aberto && (
+                <ul className="mt-0.5 mb-1.5 ml-[21px] flex flex-col gap-0.5 border-l border-lat-borda pl-3">
+                  {g.itens.map((item) =>
+                    item.href ? (
+                      <li key={item.rotulo}>
+                        <Link
+                          href={item.href}
+                          aria-current={itemAtivo(item.href, pathname) ? "page" : undefined}
+                          className={cx(
+                            "block rounded-lg px-3 py-2 text-[13px] transition",
+                            itemAtivo(item.href, pathname)
+                              ? "bg-[rgba(249,178,51,0.1)] font-semibold text-[#f9b233]"
+                              : "text-lat-suave hover:bg-white/5 hover:text-lat-texto"
+                          )}
+                        >
+                          {item.rotulo}
+                        </Link>
+                      </li>
+                    ) : (
+                      <li
+                        key={item.rotulo}
+                        className="flex items-center justify-between gap-2 px-3 py-2 text-[13px] text-lat-suave/55"
+                        title="Vem nas próximas etapas do Painel 2.0"
+                      >
+                        {item.rotulo}
+                        <span className="shrink-0 rounded-full border border-lat-borda px-1.5 py-px text-[9px] font-bold tracking-wider whitespace-nowrap uppercase">
+                          em breve
+                        </span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              )}
+            </div>
           );
         })}
       </nav>
 
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-white/10 px-1 pt-3">
-        <span className="truncate text-xs font-medium text-[#c9bfae]" title={nomeFuncionario}>
-          {nomeFuncionario}
-        </span>
-        <div className="flex shrink-0 items-center gap-1">
-          <Link
-            href="/configuracoes"
-            title="Configurações"
-            aria-label="Configurações"
-            className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
-              configuracoesAtivo
-                ? "bg-[#e0472e]/20 text-[#f6b23b]"
-                : "text-[#c9bfae] hover:bg-white/5 hover:text-[#f3ede4]"
-            }`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4 shrink-0"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              sair().then(() => {
-                window.location.href = "/login";
-              });
-            }}
-            title="Sair"
-            className="text-xs font-semibold text-[#c9bfae] hover:text-[#f3ede4] hover:underline"
-          >
-            Sair
-          </button>
+      <div className="flex items-center gap-3 rounded-2xl border border-lat-borda bg-lat-cartao p-3">
+        <div className="degrade-sol flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-sobre-sol">
+          {iniciais(nomeFuncionario)}
         </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[13px] font-semibold" title={nomeFuncionario}>
+            {nomeFuncionario}
+          </div>
+          <div className="text-[11px] text-lat-suave">{isAdmin ? "Administrador" : "Funcionário"}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            sair().then(() => {
+              window.location.href = "/login";
+            });
+          }}
+          title="Sair"
+          aria-label="Sair"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lat-suave transition hover:bg-white/5 hover:text-[#f07466]"
+        >
+          <LogOut className="h-[18px] w-[18px]" />
+        </button>
       </div>
     </aside>
   );

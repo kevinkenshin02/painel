@@ -1,178 +1,366 @@
 import Link from "next/link";
+import {
+  BadgeDollarSign,
+  CalendarClock,
+  ChartColumn,
+  CircleCheck,
+  ClipboardList,
+  Hourglass,
+  Package,
+  PackageSearch,
+  Plus,
+  ShoppingCart,
+  Target,
+  TrendingUp,
+  TriangleAlert,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusOS, StatusPagamento } from "@/generated/prisma/enums";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { hojeCalendario, mesAtualCalendario } from "@/lib/datas";
+import { semEstoque } from "@/lib/estoque";
+import { getFuncionarioLogado } from "@/lib/currentUser";
+import { Cabecalho } from "@/components/ui/Cabecalho";
+import { BotaoLink } from "@/components/ui/Botao";
+import { Cartao, TituloCartao, Vazio } from "@/components/ui/Cartao";
+import { CartaoKpi } from "@/components/ui/CartaoKpi";
+import { Chip, Etiqueta } from "@/components/ui/Etiqueta";
+import { cx } from "@/components/ui/cx";
+import { STATUS_OS_LABELS, STATUS_OS_TOM, TIPO_SERVICO_LABELS } from "./ordens-servico/labels";
+import { CATEGORIA_VENDA_LABELS } from "./vendas/labels";
 
 export const dynamic = "force-dynamic";
-import { formatCurrency, formatDate } from "@/lib/format";
-import { STATUS_OS_BADGE_CLASSES, STATUS_OS_LABELS, TIPO_SERVICO_LABELS } from "./ordens-servico/labels";
-import { getFuncionarioLogado } from "@/lib/currentUser";
 
-export default async function Home() {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+export default async function VisaoGeral() {
+  const hoje = hojeCalendario();
+  const mes = mesAtualCalendario();
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [
-    emAndamento,
-    atrasadas,
-    entregues,
-    proximas,
-    vendasMes,
-    vendasHoje,
-    config,
-    estoqueAtivo,
-    despesasFixasAtivas,
-  ] = await Promise.all([
-    prisma.ordemServico.count({ where: { status: { not: StatusOS.ENTREGUE } } }),
-    prisma.ordemServico.count({
-      where: { status: { not: StatusOS.ENTREGUE }, prazoPrometido: { lt: hoje } },
-    }),
-    prisma.ordemServico.count({
-      where: { status: StatusOS.ENTREGUE, dataEntrega: { gte: inicioMes } },
-    }),
-    prisma.ordemServico.findMany({
-      where: { status: { not: StatusOS.ENTREGUE } },
-      orderBy: { prazoPrometido: "asc" },
-      take: 5,
-    }),
-    prisma.venda.aggregate({
-      where: { statusPagamento: StatusPagamento.PAGO, dataVenda: { gte: inicioMes } },
-      _sum: { valorVendido: true },
-    }),
-    prisma.venda.aggregate({
-      where: { statusPagamento: StatusPagamento.PAGO, dataVenda: { gte: hoje } },
-      _sum: { valorVendido: true },
-    }),
-    prisma.configuracao.findUnique({ where: { id: 1 } }),
-    Promise.all([
-      prisma.armacaoEstoque.count({ where: { ativo: true } }),
-      prisma.relogioEstoque.count({ where: { ativo: true } }),
-    ]),
-    isAdmin ? prisma.despesaFixa.findMany({ where: { ativo: true } }) : Promise.resolve([]),
-  ]);
+  const [vendasMes, emAndamento, atrasadas, prontas, entreguesMes, proximas, config, armacoes, relogios, lentes, despesasFixas] =
+    await Promise.all([
+      prisma.venda.findMany({
+        where: { statusPagamento: StatusPagamento.PAGO, dataVenda: { gte: mes.inicio, lt: mes.fim } },
+        select: { dataVenda: true, valorVendido: true, custoTotal: true, categoria: true },
+      }),
+      prisma.ordemServico.count({ where: { status: { not: StatusOS.ENTREGUE } } }),
+      prisma.ordemServico.count({ where: { status: { not: StatusOS.ENTREGUE }, prazoPrometido: { lt: hoje } } }),
+      prisma.ordemServico.count({ where: { status: StatusOS.PRONTO_PARA_AVISAR } }),
+      prisma.ordemServico.count({ where: { status: StatusOS.ENTREGUE, dataEntrega: { gte: mes.inicio } } }),
+      prisma.ordemServico.findMany({
+        where: { status: { not: StatusOS.ENTREGUE } },
+        orderBy: { prazoPrometido: "asc" },
+        take: 6,
+      }),
+      prisma.configuracao.findUnique({ where: { id: 1 } }),
+      prisma.armacaoEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
+      prisma.relogioEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
+      prisma.lenteEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
+      isAdmin ? prisma.despesaFixa.findMany({ where: { ativo: true }, select: { valor: true } }) : Promise.resolve([]),
+    ]);
 
-  const totalVendasMes = vendasMes._sum.valorVendido ?? 0;
-  const totalVendasHoje = vendasHoje._sum.valorVendido ?? 0;
-  const metaDiaria = config?.metaDiaria ?? 0;
-  const metaMensal = config?.metaMensal ?? 0;
-  const totalItensEstoque = estoqueAtivo[0] + estoqueAtivo[1];
-  const totalDespesasMes = despesasFixasAtivas.reduce((sum, d) => sum + d.valor, 0);
+  // ----- vendas do mês -----
+  const totalMes = vendasMes.reduce((s, v) => s + v.valorVendido, 0);
+  const custoMes = vendasMes.reduce((s, v) => s + v.custoTotal, 0);
+  const vendasHoje = vendasMes.filter((v) => v.dataVenda.getTime() === hoje.getTime());
+  const totalHoje = vendasHoje.reduce((s, v) => s + v.valorVendido, 0);
+  const despesasMes = despesasFixas.reduce((s, d) => s + d.valor, 0);
+  const lucroMes = totalMes - custoMes - despesasMes;
+
+  const porDia = Array.from({ length: mes.dias }, (_, i) => ({ dia: i + 1, valor: 0 }));
+  for (const v of vendasMes) porDia[v.dataVenda.getUTCDate() - 1].valor += v.valorVendido;
+  const maiorDia = Math.max(0, ...porDia.map((d) => d.valor));
+  const diaDeHoje = hoje.getUTCDate();
+
+  const porCategoria = Object.entries(
+    vendasMes.reduce<Record<string, number>>((acc, v) => {
+      acc[v.categoria] = (acc[v.categoria] ?? 0) + v.valorVendido;
+      return acc;
+    }, {})
+  )
+    .map(([categoria, valor]) => ({ categoria, valor }))
+    .sort((a, b) => b.valor - a.valor);
+
+  // ----- estoque -----
+  const itens = [...armacoes, ...relogios, ...lentes];
+  const pecas = itens.reduce((s, i) => s + i.quantidade, 0);
+  const zerados = itens.filter(semEstoque).length;
 
   const metas = [
-    { label: "Meta diária", atual: totalVendasHoje, meta: metaDiaria },
-    { label: "Meta mensal", atual: totalVendasMes, meta: metaMensal },
+    { rotulo: "Meta do dia", atual: totalHoje, meta: config?.metaDiaria ?? 0 },
+    { rotulo: "Meta do mês", atual: totalMes, meta: config?.metaMensal ?? 0 },
   ].filter((m) => m.meta > 0);
 
-  const cards = [
-    { label: "Vendas do mês", value: formatCurrency(totalVendasMes) },
-    ...(isAdmin ? [{ label: "Despesas do mês", value: formatCurrency(totalDespesasMes) }] : []),
-    { label: "OS em andamento", value: String(emAndamento) },
-    { label: "OS atrasadas", value: String(atrasadas) },
-    { label: "Entregues este mês", value: String(entregues) },
-    { label: "Itens ativos em estoque", value: String(totalItensEstoque) },
-  ];
-
   return (
-    <div className="flex flex-col gap-7">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[26px] font-bold text-[#221d19]">Visão geral</h1>
-          <p className="mt-1 text-sm text-[#8a8078]">Resumo da Óticas Tanaka</p>
-        </div>
-        <Link
+    <>
+      <Cabecalho
+        secao="Operação da loja"
+        titulo="Visão Geral"
+        descricao="O resumo do dia e do mês: vendas, ordens de serviço e estoque."
+        acoes={
+          <>
+            <BotaoLink href="/ordens-servico/nova" icone={ClipboardList}>
+              Nova OS
+            </BotaoLink>
+            <BotaoLink href="/vendas/nova" variante="primario" icone={Plus}>
+              Nova venda
+            </BotaoLink>
+          </>
+        }
+      >
+        <Chip>{config?.nomeLoja?.trim() || "Tanaka Ótica e Relojoaria"}</Chip>
+        <Chip>{logado?.nome ?? "—"}</Chip>
+        <Chip>{isAdmin ? "Administrador" : "Funcionário"}</Chip>
+      </Cabecalho>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <CartaoKpi
+          tom="sol"
+          icone={ShoppingCart}
+          valor={formatCurrency(totalMes)}
+          rotulo={`Vendas de ${mes.nome}`}
+          detalhe={`${vendasMes.length} ${vendasMes.length === 1 ? "venda paga" : "vendas pagas"}`}
           href="/vendas"
-          className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white"
-        >
-          + Nova venda
-        </Link>
+        />
+        <CartaoKpi
+          tom="ambar"
+          icone={BadgeDollarSign}
+          valor={formatCurrency(totalHoje)}
+          rotulo="Vendas de hoje"
+          detalhe={`${vendasHoje.length} ${vendasHoje.length === 1 ? "venda" : "vendas"} hoje`}
+          href="/vendas"
+        />
+        {isAdmin ? (
+          <CartaoKpi
+            tom="jade"
+            icone={TrendingUp}
+            valor={formatCurrency(lucroMes)}
+            rotulo="Lucro do mês"
+            detalhe={`Vendas − custo dos produtos − despesas fixas (${formatCurrency(despesasMes)})`}
+            href="/despesas"
+          />
+        ) : (
+          <CartaoKpi
+            tom="jade"
+            icone={CircleCheck}
+            valor={prontas}
+            rotulo="Prontas para avisar"
+            detalhe="Ordens de serviço prontas"
+            href="/ordens-servico"
+          />
+        )}
+        <CartaoKpi
+          tom="noite"
+          icone={ClipboardList}
+          valor={emAndamento}
+          rotulo="OS em andamento"
+          detalhe={`${prontas} ${prontas === 1 ? "pronta" : "prontas"} para avisar o cliente`}
+          href="/ordens-servico"
+        />
+        <CartaoKpi
+          tom="rubi"
+          icone={Hourglass}
+          valor={atrasadas}
+          rotulo="OS atrasadas"
+          detalhe="Com o prazo prometido vencido"
+          href="/ordens-servico"
+        />
+        <CartaoKpi
+          tom="sakura"
+          icone={CircleCheck}
+          valor={entreguesMes}
+          rotulo="Entregues no mês"
+          detalhe="Ordens de serviço entregues"
+          href="/ordens-servico/entregues"
+        />
+        <CartaoKpi
+          tom="ouro"
+          icone={Package}
+          valor={pecas}
+          rotulo="Peças em estoque"
+          detalhe={`${itens.length} ${itens.length === 1 ? "item ativo" : "itens ativos"}`}
+          href="/estoque"
+        />
+        <CartaoKpi
+          tom="vinho"
+          icone={PackageSearch}
+          valor={zerados}
+          rotulo="Sem estoque"
+          detalhe="Itens ativos com 0 peças"
+          href="/estoque"
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-[#eee3d3] bg-white p-5">
-            <div className="text-xs font-semibold tracking-wide text-[#8a8078] uppercase">
-              {card.label}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Cartao filete className="p-6 xl:col-span-2">
+          <TituloCartao
+            selo="Faturamento"
+            icone={ChartColumn}
+            titulo="Vendas por dia"
+            descricao={`${mes.nome.charAt(0).toUpperCase() + mes.nome.slice(1)} · somente vendas pagas`}
+          >
+            <div className="text-right">
+              <div className="numero text-lg font-bold text-texto">{formatCurrency(totalMes)}</div>
+              <div className="text-xs text-suave">no mês</div>
             </div>
-            <div className="mt-2 text-[26px] font-bold text-[#221d19]">{card.value}</div>
-          </div>
-        ))}
-      </div>
+          </TituloCartao>
 
-      {metas.length > 0 && (
-        <div className="rounded-xl border border-[#eee3d3] bg-white p-6">
-          <h3 className="mb-4 text-[15px] font-bold text-[#221d19]">Metas de vendas</h3>
-          <div className="flex flex-col gap-5">
-            {metas.map((m) => {
-              const percentual = Math.min(100, Math.round((m.atual / m.meta) * 100));
-              const bateu = m.atual >= m.meta;
+          <div className="mt-6">
+            <div className="flex h-48 items-end gap-[3px] border-b border-borda" role="img" aria-label="Gráfico de vendas por dia do mês">
+              {porDia.map((d) => {
+                const altura = maiorDia > 0 ? Math.max(2, (d.valor / maiorDia) * 100) : 2;
+                const ehHoje = d.dia === diaDeHoje;
+                return (
+                  <div
+                    key={d.dia}
+                    className="flex h-full flex-1 items-end"
+                    title={`Dia ${d.dia}: ${formatCurrency(d.valor)}`}
+                  >
+                    <div
+                      className={cx(
+                        "w-full rounded-t-[5px] transition-all",
+                        ehHoje ? "degrade-sol" : d.valor > 0 ? "bg-ouro/45" : "bg-superficie-3"
+                      )}
+                      style={{ height: `${altura}%` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-2 flex justify-between text-[11px] text-suave">
+              <span>1</span>
+              <span>{Math.ceil(mes.dias / 2)}</span>
+              <span>{mes.dias}</span>
+            </div>
+            {maiorDia === 0 && (
+              <p className="mt-3 text-center text-sm text-suave">Nenhuma venda paga neste mês ainda.</p>
+            )}
+          </div>
+        </Cartao>
+
+        <Cartao filete className="p-6">
+          <TituloCartao selo="Desempenho" icone={TrendingUp} titulo="Vendas por categoria" descricao="Onde o faturamento do mês veio" />
+          <div className="mt-5 flex flex-col gap-4">
+            {porCategoria.length === 0 && <Vazio>Sem vendas pagas no mês.</Vazio>}
+            {porCategoria.map((c) => {
+              const pct = totalMes > 0 ? Math.round((c.valor / totalMes) * 100) : 0;
               return (
-                <div key={m.label}>
-                  <div className="mb-1.5 flex items-baseline justify-between">
-                    <span className="text-sm font-semibold text-[#221d19]">{m.label}</span>
-                    <span className="text-xs font-medium text-[#8a8078]">
-                      {formatCurrency(m.atual)} de {formatCurrency(m.meta)}{" "}
-                      <span className={bateu ? "font-bold text-[#3a8f5b]" : ""}>
-                        ({percentual}%)
-                      </span>
+                <div key={c.categoria}>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+                    <span className="font-semibold text-texto">
+                      {CATEGORIA_VENDA_LABELS[c.categoria as keyof typeof CATEGORIA_VENDA_LABELS] ?? c.categoria}
+                    </span>
+                    <span className="numero text-xs text-suave">
+                      {formatCurrency(c.valor)} · {pct}%
                     </span>
                   </div>
-                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#f3ede4]">
-                    <div
-                      className={`h-full rounded-full ${
-                        bateu
-                          ? "bg-[#3a8f5b]"
-                          : "bg-gradient-to-r from-[#f6b23b] to-[#e0472e]"
-                      }`}
-                      style={{ width: `${percentual}%` }}
-                    />
+                  <div className="h-2 overflow-hidden rounded-full bg-superficie-3">
+                    <div className="degrade-sol h-full rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-
-      <div className="rounded-xl border border-[#eee3d3] bg-white p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-[#221d19]">
-          Próximas entregas
-        </h3>
-        {proximas.length === 0 ? (
-          <p className="text-sm text-[#8a8078]">
-            Nenhuma ordem de serviço em andamento.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {proximas.map((os) => (
-              <div
-                key={os.id}
-                className="flex items-center justify-between border-b border-[#f3ede4] pb-3 last:border-0 last:pb-0"
-              >
-                <div>
-                  <div className="text-sm font-semibold text-[#221d19]">
-                    {os.clienteNome}
-                  </div>
-                  <div className="text-xs text-[#8a8078]">
-                    {TIPO_SERVICO_LABELS[os.tipoServico]}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-[#221d19]">
-                    {formatDate(os.prazoPrometido)}
-                  </div>
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_OS_BADGE_CLASSES[os.status]}`}
-                  >
-                    {STATUS_OS_LABELS[os.status]}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        </Cartao>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Cartao filete className="overflow-hidden xl:col-span-2">
+          <div className="p-6 pb-4">
+            <TituloCartao
+              selo="Ordens de serviço"
+              icone={CalendarClock}
+              titulo="Próximas entregas"
+              descricao="As OS em andamento com o prazo mais perto"
+            >
+              <BotaoLink href="/ordens-servico" tamanho="sm">
+                Ver todas
+              </BotaoLink>
+            </TituloCartao>
+          </div>
+          {proximas.length === 0 ? (
+            <div className="px-6 pb-6">
+              <Vazio>Nenhuma ordem de serviço em andamento.</Vazio>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="tabela">
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Prazo</th>
+                    <th>Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proximas.map((os) => {
+                    const atrasada = os.prazoPrometido < hoje;
+                    return (
+                      <tr key={os.id}>
+                        <td className="destaque numero">#{os.id}</td>
+                        <td className="destaque">{os.clienteNome}</td>
+                        <td>{TIPO_SERVICO_LABELS[os.tipoServico]}</td>
+                        <td className={cx("numero", atrasada && "font-semibold text-perigo")}>
+                          {formatDate(os.prazoPrometido)}
+                          {atrasada && (
+                            <TriangleAlert className="ml-1.5 inline h-3.5 w-3.5 -translate-y-px" aria-label="Atrasada" />
+                          )}
+                        </td>
+                        <td>
+                          <Etiqueta tom={STATUS_OS_TOM[os.status]}>{STATUS_OS_LABELS[os.status]}</Etiqueta>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Cartao>
+
+        <Cartao filete className="p-6">
+          <TituloCartao selo="Metas" icone={Target} titulo="Metas de vendas" descricao="Acompanhe o dia e o mês" />
+          <div className="mt-5 flex flex-col gap-5">
+            {metas.length === 0 ? (
+              <Vazio>
+                Nenhuma meta definida.
+                {isAdmin && (
+                  <>
+                    {" "}
+                    <Link href="/configuracoes" className="font-semibold text-ouro hover:underline">
+                      Definir metas
+                    </Link>
+                  </>
+                )}
+              </Vazio>
+            ) : (
+              metas.map((m) => {
+                const pct = Math.min(100, Math.round((m.atual / m.meta) * 100));
+                const bateu = m.atual >= m.meta;
+                return (
+                  <div key={m.rotulo}>
+                    <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                      <span className="text-sm font-semibold text-texto">{m.rotulo}</span>
+                      <span className="numero text-xs text-suave">
+                        {formatCurrency(m.atual)} de {formatCurrency(m.meta)}{" "}
+                        <span className={bateu ? "font-bold text-sucesso" : ""}>({pct}%)</span>
+                      </span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-superficie-3">
+                      <div
+                        className={cx("h-full rounded-full", bateu ? "bg-sucesso" : "degrade-sol")}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </Cartao>
+      </div>
+    </>
   );
 }

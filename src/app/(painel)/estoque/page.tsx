@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { toDateInputValue } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
+import { hojeInput } from "@/lib/datas";
+import { semEstoque } from "@/lib/estoque";
+import { Cabecalho } from "@/components/ui/Cabecalho";
+import { Chip } from "@/components/ui/Etiqueta";
 import {
   criarArmacao,
   criarRelogio,
@@ -22,10 +26,10 @@ import { getFuncionarioLogado } from "@/lib/currentUser";
 export const dynamic = "force-dynamic";
 
 const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-3 py-2.5 text-sm text-[#221d19]";
+  "w-full rounded-xl border border-borda bg-superficie-2 px-3.5 py-2.5 text-sm text-texto focus:border-ouro focus:ring-2 focus:ring-ouro/25 focus:outline-none";
 
-export default async function EstoquePage() {
-  const hoje = new Date();
+export default async function EstoquePage(props: PageProps<"/estoque">) {
+  const { aba } = await props.searchParams;
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
@@ -38,8 +42,8 @@ export default async function EstoquePage() {
   const armacoesSection = (
     <div className="flex flex-col gap-5">
       {isAdmin && (
-        <details className="rounded-xl border border-[#eee3d3] bg-white open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-[#221d19] select-none">
+        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
+          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
             + Nova Armação
           </summary>
           <AutoResetForm
@@ -47,47 +51,47 @@ export default async function EstoquePage() {
             className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Código</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
               <input type="text" name="codigo" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Marca/Modelo</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca/Modelo</span>
               <input type="text" name="marcaModelo" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Cor/Referência</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Cor/Referência</span>
               <input type="text" name="corReferencia" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Fornecedor</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
               <input type="text" name="fornecedor" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Data de entrada</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
               <input
                 type="date"
                 name="dataEntrada"
                 required
-                defaultValue={toDateInputValue(hoje)}
+                defaultValue={hojeInput()}
                 className={inputClass}
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Quantidade</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
               <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Custo unitário (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
               <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Preço de venda (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
               <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
             </label>
             <div className="sm:col-span-2 lg:col-span-3">
               <button
                 type="submit"
-                className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white"
+                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
               >
                 Cadastrar armação
               </button>
@@ -108,8 +112,8 @@ export default async function EstoquePage() {
   const relogiosSection = (
     <div className="flex flex-col gap-5">
       {isAdmin && (
-        <details className="rounded-xl border border-[#eee3d3] bg-white open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-[#221d19] select-none">
+        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
+          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
             + Novo Relógio
           </summary>
           <AutoResetForm
@@ -117,11 +121,11 @@ export default async function EstoquePage() {
             className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Código</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
               <input type="text" name="codigo" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Marca</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca</span>
               <select name="marca" required defaultValue="ORIENT" className={inputClass}>
                 {Object.entries(MARCA_RELOGIO_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -131,15 +135,15 @@ export default async function EstoquePage() {
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Marca (se &quot;Outro&quot;)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca (se &quot;Outro&quot;)</span>
               <input type="text" name="marcaOutro" className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Modelo/Referência</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Modelo/Referência</span>
               <input type="text" name="modeloReferencia" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Público</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Público</span>
               <select name="tipoPublico" required defaultValue="UNISSEX" className={inputClass}>
                 {Object.entries(PUBLICO_RELOGIO_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -149,7 +153,7 @@ export default async function EstoquePage() {
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Mecanismo</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Mecanismo</span>
               <select name="tipoMecanismo" required defaultValue="ANALOGICO" className={inputClass}>
                 {Object.entries(MECANISMO_RELOGIO_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -159,35 +163,35 @@ export default async function EstoquePage() {
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Fornecedor</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
               <input type="text" name="fornecedor" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Data de entrada</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
               <input
                 type="date"
                 name="dataEntrada"
                 required
-                defaultValue={toDateInputValue(hoje)}
+                defaultValue={hojeInput()}
                 className={inputClass}
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Quantidade</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
               <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Custo unitário (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
               <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Preço de venda (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
               <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
             </label>
             <div className="sm:col-span-2 lg:col-span-3">
               <button
                 type="submit"
-                className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white"
+                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
               >
                 Cadastrar relógio
               </button>
@@ -208,8 +212,8 @@ export default async function EstoquePage() {
   const lentesSection = (
     <div className="flex flex-col gap-5">
       {isAdmin && (
-        <details className="rounded-xl border border-[#eee3d3] bg-white open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-[#221d19] select-none">
+        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
+          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
             + Nova Lente Pronta
           </summary>
           <AutoResetForm
@@ -217,11 +221,11 @@ export default async function EstoquePage() {
             className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
           >
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Código</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
               <input type="text" name="codigo" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Descrição</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Descrição</span>
               <input
                 type="text"
                 name="descricao"
@@ -231,7 +235,7 @@ export default async function EstoquePage() {
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Grau</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Grau</span>
               <input
                 type="text"
                 name="grau"
@@ -241,35 +245,35 @@ export default async function EstoquePage() {
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Fornecedor</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
               <input type="text" name="fornecedor" required className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Data de entrada</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
               <input
                 type="date"
                 name="dataEntrada"
                 required
-                defaultValue={toDateInputValue(hoje)}
+                defaultValue={hojeInput()}
                 className={inputClass}
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Quantidade</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
               <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Custo unitário (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
               <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-xs font-semibold text-[#8a8078]">Preço de venda (R$)</span>
+              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
               <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
             </label>
             <div className="sm:col-span-2 lg:col-span-3">
               <button
                 type="submit"
-                className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white"
+                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
               >
                 Cadastrar lente
               </button>
@@ -287,16 +291,40 @@ export default async function EstoquePage() {
     </div>
   );
 
-  return (
-    <div className="flex flex-col gap-7">
-      <div>
-        <h1 className="text-[26px] font-bold text-[#221d19]">Estoque</h1>
-        <p className="mt-1 text-sm text-[#8a8078]">
-          Armações, relógios e lentes prontas disponíveis para venda.
-        </p>
-      </div>
+  const ativos = [...armacoes, ...relogios, ...lentes].filter((i) => i.ativo);
+  const pecas = ativos.reduce((s, i) => s + i.quantidade, 0);
+  const valorVenda = ativos.reduce((s, i) => s + i.quantidade * i.precoVenda, 0);
+  const valorCusto = ativos.reduce((s, i) => s + i.quantidade * i.custoUnitario, 0);
+  const zerados = ativos.filter(semEstoque).length;
 
-      <EstoqueTabs armacoes={armacoesSection} relogios={relogiosSection} lentes={lentesSection} />
-    </div>
+  return (
+    <>
+      <Cabecalho
+        secao="Estoque"
+        titulo="Posição do estoque"
+        descricao="Relógios, armações e lentes prontas disponíveis para venda. Vender pelo Painel já tira do estoque."
+      >
+        <Chip>{pecas} peças em {ativos.length} itens ativos</Chip>
+        <Chip>
+          Valor de venda: <span className="numero text-texto">{formatCurrency(valorVenda)}</span>
+        </Chip>
+        {isAdmin && (
+          <Chip>
+            Valor de custo: <span className="numero text-texto">{formatCurrency(valorCusto)}</span>
+          </Chip>
+        )}
+        <Chip className={zerados > 0 ? "border-perigo/40 text-perigo" : undefined}>
+          {zerados} {zerados === 1 ? "item ativo zerado" : "itens ativos zerados"}
+        </Chip>
+      </Cabecalho>
+
+      <EstoqueTabs
+        inicial={aba === "armacoes" || aba === "lentes" ? aba : "relogios"}
+        contagem={{ armacoes: armacoes.length, relogios: relogios.length, lentes: lentes.length }}
+        armacoes={armacoesSection}
+        relogios={relogiosSection}
+        lentes={lentesSection}
+      />
+    </>
   );
 }

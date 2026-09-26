@@ -1,38 +1,40 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useState } from "react";
 import { criarFuncionarioComPinAdmin } from "./actions";
-
-const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-3 py-2.5 text-sm text-[#221d19]";
+import { Botao } from "@/components/ui/Botao";
+import { Campo, classeCampo } from "@/components/ui/Campo";
+import { Aviso } from "@/components/ui/Aviso";
 
 const ESTADO_INICIAL: { erro?: string; ok?: boolean; nomeAdicionado?: string } = {};
 
 export function CriarFuncionarioForm({ onVoltar }: { onVoltar: () => void }) {
-  const [estado, formAction, isPending] = useActionState(criarFuncionarioComPinAdmin, ESTADO_INICIAL);
   const [pinAdmin, setPinAdmin] = useState("");
   const [nome, setNome] = useState("");
   const [pin, setPin] = useState("");
-
-  useEffect(() => {
-    if (estado.ok) {
-      setPinAdmin("");
-      setNome("");
-      setPin("");
-    }
-  }, [estado]);
+  // Campos controlados: só limpa quando deu certo (num erro a pessoa não precisa redigitar tudo).
+  const [estado, formAction, isPending] = useActionState(
+    async (anterior: typeof ESTADO_INICIAL, formData: FormData) => {
+      const resultado = await criarFuncionarioComPinAdmin(anterior, formData);
+      if (resultado.ok) {
+        setPinAdmin("");
+        setNome("");
+        setPin("");
+      }
+      return resultado;
+    },
+    ESTADO_INICIAL
+  );
 
   return (
-    <form action={formAction} className="flex w-full max-w-xs flex-col gap-4">
-      <div className="rounded-lg border border-[#e4dbcb] bg-[#fdf0d5] px-3 py-2.5 text-xs text-[#8a6a1f]">
-        Só o administrador pode cadastrar novos funcionários. Digite o PIN do administrador
-        para liberar o cadastro.
-      </div>
+    <form action={formAction} className="mx-auto flex w-full max-w-sm flex-col gap-4">
+      <Aviso tom="aviso">
+        Só o administrador pode cadastrar novos funcionários. Digite o PIN do administrador para liberar o cadastro.
+      </Aviso>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="text-xs font-semibold text-[#8a8078]">PIN do administrador</span>
+      <Campo rotulo="PIN do administrador">
         <input
-          type="text"
+          type="password"
           name="pinAdmin"
           inputMode="numeric"
           autoComplete="off"
@@ -40,26 +42,17 @@ export function CriarFuncionarioForm({ onVoltar }: { onVoltar: () => void }) {
           required
           value={pinAdmin}
           onChange={(e) => setPinAdmin(e.target.value.replace(/\D/g, ""))}
-          className={`${inputClass} tracking-[0.3em]`}
+          className={`${classeCampo} tracking-[0.3em]`}
         />
-      </label>
+      </Campo>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="text-xs font-semibold text-[#8a8078]">Nome do novo funcionário</span>
-        <input
-          type="text"
-          name="nome"
-          required
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          className={inputClass}
-        />
-      </label>
+      <Campo rotulo="Nome do novo funcionário">
+        <input type="text" name="nome" required value={nome} onChange={(e) => setNome(e.target.value)} className={classeCampo} />
+      </Campo>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="text-xs font-semibold text-[#8a8078]">PIN do novo funcionário (4 a 6 números)</span>
+      <Campo rotulo="PIN do novo funcionário (4 a 6 números)">
         <input
-          type="text"
+          type="password"
           name="pin"
           inputMode="numeric"
           autoComplete="off"
@@ -67,35 +60,22 @@ export function CriarFuncionarioForm({ onVoltar }: { onVoltar: () => void }) {
           required
           value={pin}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-          className={`${inputClass} tracking-[0.3em]`}
+          className={`${classeCampo} tracking-[0.3em]`}
         />
-      </label>
+      </Campo>
 
-      {estado.erro && (
-        <p className="rounded-lg border border-[#fde8e2] bg-[#fde8e2] px-4 py-2.5 text-sm font-semibold text-[#c0472b]">
-          {estado.erro}
-        </p>
-      )}
+      {estado.erro && <Aviso tom="perigo">{estado.erro}</Aviso>}
       {estado.ok && (
-        <p className="rounded-lg border border-[#e3f1e8] bg-[#e3f1e8] px-4 py-2.5 text-sm font-semibold text-[#3a8f5b]">
-          &quot;{estado.nomeAdicionado}&quot; foi cadastrado. Já pode escolher o perfil dele e
-          entrar com o PIN.
-        </p>
+        <Aviso tom="sucesso">
+          &quot;{estado.nomeAdicionado}&quot; foi cadastrado. Já pode escolher o perfil e entrar com o PIN.
+        </Aviso>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-      >
+      <Botao type="submit" variante="primario" tamanho="lg" disabled={isPending}>
         {isPending ? "Criando..." : "Criar funcionário"}
-      </button>
-      <button
-        type="button"
-        onClick={onVoltar}
-        className="text-xs font-semibold text-[#8a8078] hover:text-[#221d19] hover:underline"
-      >
-        Voltar
+      </Botao>
+      <button type="button" onClick={onVoltar} className="text-xs font-semibold text-suave hover:text-ouro hover:underline">
+        Voltar para os perfis
       </button>
     </form>
   );

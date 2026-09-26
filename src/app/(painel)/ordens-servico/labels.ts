@@ -1,4 +1,5 @@
 import { StatusOS, TipoServico } from "@/generated/prisma/enums";
+import type { Tom } from "@/components/ui/Etiqueta";
 
 export const TIPO_SERVICO_LABELS: Record<TipoServico, string> = {
   VISAO_SIMPLES: "Visão Simples",
@@ -26,10 +27,10 @@ export const STATUS_OS_ORDER: StatusOS[] = [
   StatusOS.ENTREGUE,
 ];
 
-export const STATUS_OS_BADGE_CLASSES: Record<StatusOS, string> = {
-  RECEBIDO: "bg-[#f3ede4] text-[#6b6157]",
-  NO_LABORATORIO_BANCADA: "bg-[#fdf0d5] text-[#c98a1f]",
-  PRONTO_PARA_AVISAR: "bg-[#fde8e2] text-[#c0472b]",
-  CLIENTE_AVISADO: "bg-[#fdeccb] text-[#a5631a]",
-  ENTREGUE: "bg-[#e3f1e8] text-[#3a8f5b]",
+export const STATUS_OS_TOM: Record<StatusOS, Tom> = {
+  RECEBIDO: "neutro",
+  NO_LABORATORIO_BANCADA: "aviso",
+  PRONTO_PARA_AVISAR: "ouro",
+  CLIENTE_AVISADO: "info",
+  ENTREGUE: "sucesso",
 };

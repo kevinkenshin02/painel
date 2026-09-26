@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { DatabaseBackup } from "lucide-react";
 import { rodarBackupManual } from "./actions";
+import { Botao } from "@/components/ui/Botao";
 
 export function BackupButton() {
   const [isPending, startTransition] = useTransition();
@@ -16,16 +18,11 @@ export function BackupButton() {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={isPending}
-        className="self-start rounded-lg border border-[#e4dbcb] px-4 py-2.5 text-sm font-semibold text-[#221d19] hover:bg-[#f7f1e6] disabled:opacity-60"
-      >
+    <div className="flex flex-col items-start gap-2">
+      <Botao onClick={handleClick} disabled={isPending} icone={DatabaseBackup}>
         {isPending ? "Fazendo backup..." : "Fazer backup agora"}
-      </button>
-      {mensagem && <p className="text-xs text-[#8a8078]">{mensagem}</p>}
+      </Botao>
+      {mensagem && <p className="text-xs text-suave">{mensagem}</p>}
     </div>
   );
 }

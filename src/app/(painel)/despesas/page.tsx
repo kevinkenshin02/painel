@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation";
+import { ListPlus, Receipt } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import { criarDespesasFixasEmLote, alternarAtivoDespesaFixa, excluirDespesaFixa } from "./actions";
 import { DespesasLoteForm } from "./DespesasLoteForm";
 import { DespesaFixaRow } from "./DespesaFixaRow";
 import { getFuncionarioLogado } from "@/lib/currentUser";
+import { Cabecalho } from "@/components/ui/Cabecalho";
+import { Cartao, TituloCartao } from "@/components/ui/Cartao";
+import { Chip } from "@/components/ui/Etiqueta";
 
 export const dynamic = "force-dynamic";
 
@@ -18,66 +22,74 @@ export default async function DespesasPage() {
     orderBy: { criadoEm: "asc" },
   });
 
-  const totalMensal = despesas
-    .filter((d) => d.ativo)
-    .reduce((sum, d) => sum + d.valor, 0);
+  const ativas = despesas.filter((d) => d.ativo);
+  const totalMensal = ativas.reduce((sum, d) => sum + d.valor, 0);
 
   return (
-    <div className="flex flex-col gap-7">
-      <div>
-        <h1 className="text-[26px] font-bold text-[#221d19]">Despesas</h1>
-        <p className="mt-1 text-sm text-[#8a8078]">
-          Despesas fixas da loja, contabilizadas todo mês automaticamente.
-        </p>
-      </div>
+    <>
+      <Cabecalho
+        secao="Financeiro"
+        titulo="Despesas fixas"
+        descricao="Aluguel, condomínio, internet, salários... Entram todo mês na conta do lucro da Visão Geral."
+      >
+        <Chip>
+          Por mês: <span className="numero text-texto">{formatCurrency(totalMensal)}</span>
+        </Chip>
+        <Chip>
+          {ativas.length} {ativas.length === 1 ? "despesa ativa" : "despesas ativas"}
+        </Chip>
+      </Cabecalho>
 
-      <div className="rounded-xl border border-[#eee3d3] bg-white p-5">
-        <div className="text-xs font-semibold tracking-wide text-[#8a8078] uppercase">
-          Despesas fixas por mês
-        </div>
-        <div className="mt-2 text-[26px] font-bold text-[#221d19]">
-          {formatCurrency(totalMensal)}
-        </div>
-      </div>
-
-      <details open className="rounded-xl border border-[#eee3d3] bg-white open:pb-6">
-        <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-[#221d19] select-none">
-          + Lançar despesas fixas
-        </summary>
-
+      <Cartao filete className="p-6">
+        <TituloCartao
+          selo="Lançamento"
+          icone={ListPlus}
+          titulo="Lançar despesas fixas"
+          descricao="Preencha quantas linhas quiser — linhas em branco são ignoradas."
+          className="mb-5"
+        />
         <DespesasLoteForm action={criarDespesasFixasEmLote} />
-      </details>
+      </Cartao>
 
-      <div className="overflow-x-auto rounded-xl border border-[#eee3d3] bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-[#f7f1e6]">
-            <tr className="text-left text-xs font-bold tracking-wide text-[#8a8078] uppercase">
-              <th className="px-5 py-3.5">Nome</th>
-              <th className="px-5 py-3.5">Valor mensal</th>
-              <th className="px-5 py-3.5">Observação</th>
-              <th className="px-5 py-3.5">Status</th>
-              <th className="px-5 py-3.5" />
-            </tr>
-          </thead>
-          <tbody>
-            {despesas.length === 0 && (
+      <Cartao filete className="overflow-hidden">
+        <div className="p-6 pb-5">
+          <TituloCartao selo="Cadastro" icone={Receipt} titulo="Despesas cadastradas" descricao="Desative as que não valem mais sem perder o histórico." />
+        </div>
+        <div className="overflow-x-auto border-t border-borda">
+          <table className="tabela">
+            <thead>
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-sm text-[#8a8078]">
-                  Nenhuma despesa fixa cadastrada ainda.
-                </td>
+                <th>Nome</th>
+                <th>Valor mensal</th>
+                <th>Observação</th>
+                <th>Situação</th>
+                <th />
               </tr>
+            </thead>
+            <tbody>
+              {despesas.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-suave">
+                    Nenhuma despesa fixa cadastrada ainda.
+                  </td>
+                </tr>
+              )}
+              {despesas.map((d) => (
+                <DespesaFixaRow key={d.id} despesa={d} alternarAtivo={alternarAtivoDespesaFixa} excluir={excluirDespesaFixa} />
+              ))}
+            </tbody>
+            {despesas.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td>Total mensal (ativas)</td>
+                  <td className="numero">{formatCurrency(totalMensal)}</td>
+                  <td colSpan={3} />
+                </tr>
+              </tfoot>
             )}
-            {despesas.map((d) => (
-              <DespesaFixaRow
-                key={d.id}
-                despesa={d}
-                alternarAtivo={alternarAtivoDespesaFixa}
-                excluir={excluirDespesaFixa}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </table>
+        </div>
+      </Cartao>
+    </>
   );
 }

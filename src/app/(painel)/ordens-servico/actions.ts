@@ -9,7 +9,7 @@ function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export async function criarOrdemServico(formData: FormData) {
+export async function criarOrdemServico(formData: FormData): Promise<{ erro?: string; ok?: boolean; id?: number }> {
   const dataEntrada = formData.get("dataEntrada") as string;
   const clienteNome = (formData.get("clienteNome") as string)?.trim();
   const clienteWhatsapp = (formData.get("clienteWhatsapp") as string)?.trim();
@@ -27,10 +27,13 @@ export async function criarOrdemServico(formData: FormData) {
     !descricao ||
     !prazoPrometido
   ) {
-    throw new Error("Preencha todos os campos obrigatórios.");
+    return { erro: "Preencha todos os campos obrigatórios." };
+  }
+  if (sinalPago > valorTotal) {
+    return { erro: "O sinal pago não pode ser maior que o valor total." };
   }
 
-  await prisma.ordemServico.create({
+  const os = await prisma.ordemServico.create({
     data: {
       dataEntrada: new Date(dataEntrada),
       clienteNome,
@@ -44,7 +47,9 @@ export async function criarOrdemServico(formData: FormData) {
     },
   });
 
-  revalidatePath("/ordens-servico");
+  revalidatePath("/ordens-servico", "layout");
+  revalidatePath("/");
+  return { ok: true, id: os.id };
 }
 
 export async function atualizarStatusOrdemServico(formData: FormData) {
@@ -79,7 +84,8 @@ export async function atualizarStatusOrdemServico(formData: FormData) {
     });
   }
 
-  revalidatePath("/ordens-servico");
+  revalidatePath("/ordens-servico", "layout");
+  revalidatePath("/");
 }
 
 export async function excluirOrdemServico(formData: FormData) {
@@ -90,5 +96,6 @@ export async function excluirOrdemServico(formData: FormData) {
 
   await prisma.ordemServico.delete({ where: { id } });
 
-  revalidatePath("/ordens-servico");
+  revalidatePath("/ordens-servico", "layout");
+  revalidatePath("/");
 }

@@ -1,13 +1,12 @@
 "use client";
 
+import { Printer } from "lucide-react";
+import { Botao } from "@/components/ui/Botao";
+
 export function PrintButton() {
   return (
-    <button
-      type="button"
-      onClick={() => window.print()}
-      className="print:hidden rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-5 py-2.5 text-sm font-bold text-white"
-    >
+    <Botao variante="primario" icone={Printer} onClick={() => window.print()} className="print:hidden">
       Imprimir comprovante
-    </button>
+    </Botao>
   );
 }

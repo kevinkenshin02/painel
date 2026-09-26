@@ -9,17 +9,14 @@ export function StatusSelect({ id, status }: { id: number; status: StatusOS }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <form
-      ref={formRef}
-      action={atualizarStatusOrdemServico}
-      className="flex items-center gap-1"
-    >
+    <form ref={formRef} action={atualizarStatusOrdemServico}>
       <input type="hidden" name="id" value={id} />
       <select
         name="status"
         defaultValue={status}
+        aria-label="Mudar situação"
         onChange={() => formRef.current?.requestSubmit()}
-        className="rounded-md border border-[#e4dbcb] bg-white px-2 py-1 text-xs font-medium text-[#4a4038]"
+        className="w-auto rounded-lg border border-borda bg-superficie-2 px-2 py-1 text-xs font-medium text-texto-2 focus:border-ouro focus:outline-none"
       >
         {STATUS_OS_ORDER.map((s) => (
           <option key={s} value={s}>
@@ -27,13 +24,6 @@ export function StatusSelect({ id, status }: { id: number; status: StatusOS }) {
           </option>
         ))}
       </select>
-      <button
-        type="submit"
-        aria-label="Salvar status"
-        className="rounded-md border border-[#e4dbcb] px-1.5 py-1 text-xs text-[#8a8078] hover:bg-[#f7f1e6]"
-      >
-        ✓
-      </button>
     </form>
   );
 }

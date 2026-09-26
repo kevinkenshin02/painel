@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { Delete } from "lucide-react";
 import { entrarComPin } from "./actions";
+import { Botao } from "@/components/ui/Botao";
+import { cx } from "@/components/ui/cx";
 
 const PIN_MIN = 4;
 const PIN_MAX = 6;
+
+const classeTecla =
+  "flex h-14 w-[4.5rem] items-center justify-center rounded-2xl border border-borda bg-superficie-2 text-xl font-bold text-texto transition hover:border-borda-forte hover:bg-superficie-3 active:scale-95 disabled:opacity-50";
 
 export function PinPad({ funcionarioId }: { funcionarioId: number }) {
   const [pin, setPin] = useState("");
@@ -64,50 +70,36 @@ export function PinPad({ funcionarioId }: { funcionarioId: number }) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="flex gap-3.5">
-        {Array.from({ length: PIN_MAX }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-6 w-6 rounded-full border-2 border-[#e4dbcb] ${
-              i < pin.length ? "bg-gradient-to-br from-[#f6b23b] to-[#e0472e] border-transparent" : ""
-            }`}
-          />
-        ))}
+    <div className="flex flex-col items-center gap-5">
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex gap-3" aria-label={`${pin.length} números digitados`}>
+          {Array.from({ length: PIN_MAX }).map((_, i) => (
+            <div
+              key={i}
+              className={cx(
+                "h-4 w-4 rounded-full border-2 transition",
+                i < pin.length ? "degrade-sol border-transparent" : "border-borda-forte"
+              )}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-suave">
+          {erro ? (
+            <span className="font-semibold text-perigo">{erro}</span>
+          ) : isPending ? (
+            "Entrando..."
+          ) : (
+            "PIN de 4 a 6 números — dá para digitar no teclado"
+          )}
+        </p>
       </div>
-      <p className="-mt-4 text-xs text-[#8a8078]">PIN de 4 a 6 números</p>
 
-      {erro && <p className="text-sm font-medium text-[#c0472b]">{erro}</p>}
-      {isPending && <p className="text-sm text-[#8a8078]">Entrando...</p>}
-
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2.5">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => adicionarDigito(n)}
-            disabled={isPending}
-            className="h-16 w-16 rounded-xl border border-[#e4dbcb] bg-white text-xl font-bold text-[#221d19] hover:bg-[#f7f1e6] disabled:opacity-50"
-          >
+          <button key={n} type="button" onClick={() => adicionarDigito(n)} disabled={isPending} className={classeTecla}>
             {n}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={apagar}
-          disabled={isPending}
-          className="h-16 w-16 rounded-xl border border-[#e4dbcb] bg-white text-sm font-semibold text-[#8a8078] hover:bg-[#f7f1e6] disabled:opacity-50"
-        >
-          Apagar
-        </button>
-        <button
-          type="button"
-          onClick={() => adicionarDigito("0")}
-          disabled={isPending}
-          className="h-16 w-16 rounded-xl border border-[#e4dbcb] bg-white text-xl font-bold text-[#221d19] hover:bg-[#f7f1e6] disabled:opacity-50"
-        >
-          0
-        </button>
         <button
           type="button"
           onClick={() => {
@@ -115,20 +107,27 @@ export function PinPad({ funcionarioId }: { funcionarioId: number }) {
             setPin("");
           }}
           disabled={isPending}
-          className="h-16 w-16 rounded-xl border border-[#e4dbcb] bg-white text-sm font-semibold text-[#8a8078] hover:bg-[#f7f1e6] disabled:opacity-50"
+          className={cx(classeTecla, "text-xs font-semibold text-suave")}
         >
           Limpar
         </button>
+        <button type="button" onClick={() => adicionarDigito("0")} disabled={isPending} className={classeTecla}>
+          0
+        </button>
+        <button type="button" onClick={apagar} disabled={isPending} aria-label="Apagar" className={cx(classeTecla, "text-suave")}>
+          <Delete className="h-5 w-5" />
+        </button>
       </div>
 
-      <button
-        type="button"
+      <Botao
+        variante="primario"
+        tamanho="lg"
         onClick={() => tentar(pin, true)}
         disabled={!podeConfirmar || isPending}
-        className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-8 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+        className="w-full max-w-[16rem]"
       >
-        Confirmar
-      </button>
+        Entrar
+      </Botao>
     </div>
   );
 }

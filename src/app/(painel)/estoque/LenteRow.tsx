@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import { semEstoque } from "@/lib/estoque";
 import { editarLente } from "./actions";
 import { ToggleAtivoButton } from "@/components/ToggleAtivoButton";
 import { ConfirmDeleteForm } from "@/components/ConfirmDeleteForm";
 
 const inputClass =
-  "rounded-lg border border-[#e4dbcb] bg-white px-2.5 py-1.5 text-sm text-[#221d19]";
+  "rounded-lg border border-borda bg-superficie px-2.5 py-1.5 text-sm text-texto focus:border-ouro focus:outline-none";
 
 type Lente = {
   id: number;
@@ -42,15 +43,15 @@ export function LenteRow({
 
   if (editando && isAdmin) {
     return (
-      <tr className="border-t border-[#f3ede4] bg-[#f7f1e6]">
-        <td colSpan={9} className="px-5 py-4">
+      <tr className="bg-superficie-2">
+        <td colSpan={9} >
           <form action={handleSalvar} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Código</span>
+              <span className="font-semibold text-suave">Código</span>
               <input type="text" name="codigo" required defaultValue={lente.codigo} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Descrição</span>
+              <span className="font-semibold text-suave">Descrição</span>
               <input
                 type="text"
                 name="descricao"
@@ -60,11 +61,11 @@ export function LenteRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Grau</span>
+              <span className="font-semibold text-suave">Grau</span>
               <input type="text" name="grau" required defaultValue={lente.grau} className={inputClass} />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Fornecedor</span>
+              <span className="font-semibold text-suave">Fornecedor</span>
               <input
                 type="text"
                 name="fornecedor"
@@ -74,7 +75,7 @@ export function LenteRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Quantidade</span>
+              <span className="font-semibold text-suave">Quantidade</span>
               <input
                 type="number"
                 name="quantidade"
@@ -85,7 +86,7 @@ export function LenteRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Custo unitário (R$)</span>
+              <span className="font-semibold text-suave">Custo unitário (R$)</span>
               <input
                 type="number"
                 name="custoUnitario"
@@ -97,7 +98,7 @@ export function LenteRow({
               />
             </label>
             <label className="flex flex-col gap-1 text-xs">
-              <span className="font-semibold text-[#8a8078]">Preço de venda (R$)</span>
+              <span className="font-semibold text-suave">Preço de venda (R$)</span>
               <input
                 type="number"
                 name="precoVenda"
@@ -110,14 +111,14 @@ export function LenteRow({
             </label>
             <button
               type="submit"
-              className="rounded-lg bg-gradient-to-br from-[#f6b23b] to-[#e0472e] px-4 py-2 text-xs font-bold text-white"
+              className="degrade-sol rounded-lg px-4 py-2 text-xs font-bold text-sobre-sol"
             >
               Salvar
             </button>
             <button
               type="button"
               onClick={() => setEditando(false)}
-              className="rounded-lg border border-[#e4dbcb] px-4 py-2 text-xs font-semibold text-[#4a4038] hover:bg-white"
+              className="rounded-lg border border-borda px-4 py-2 text-xs font-semibold text-texto-2 hover:bg-superficie-3"
             >
               Cancelar
             </button>
@@ -128,21 +129,24 @@ export function LenteRow({
   }
 
   return (
-    <tr className="border-t border-[#f3ede4]">
-      <td className="px-5 py-4 font-semibold text-[#221d19]">{lente.codigo}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{lente.descricao}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{lente.grau}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{lente.fornecedor}</td>
-      <td className="px-5 py-4 text-[#4a4038]">{lente.quantidade}</td>
-      {isAdmin && <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(lente.custoUnitario)}</td>}
-      <td className="px-5 py-4 text-[#4a4038]">{formatCurrency(lente.precoVenda)}</td>
-      <td className="px-5 py-4">
+    <tr>
+      <td className="destaque whitespace-nowrap">{lente.codigo}</td>
+      <td>{lente.descricao}</td>
+      <td>{lente.grau}</td>
+      <td>{lente.fornecedor}</td>
+      <td className="numero">
+        <span className={semEstoque(lente) ? "font-bold text-perigo" : "text-texto"}>{lente.quantidade}</span>
+        {semEstoque(lente) && <span className="ml-1.5 rounded-full bg-perigo-fundo px-1.5 py-px text-[10px] font-bold text-perigo uppercase">zerado</span>}
+      </td>
+      {isAdmin && <td className="numero">{formatCurrency(lente.custoUnitario)}</td>}
+      <td className="numero">{formatCurrency(lente.precoVenda)}</td>
+      <td>
         {isAdmin ? (
           <ToggleAtivoButton id={lente.id} ativo={lente.ativo} action={alternarAtivo} />
         ) : (
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-              lente.ativo ? "bg-[#e3f1e8] text-[#3a8f5b]" : "bg-[#f3ede4] text-[#8a8078]"
+              lente.ativo ? "bg-sucesso-fundo text-sucesso" : "bg-superficie-3 text-suave"
             }`}
           >
             {lente.ativo ? "Ativo" : "Inativo"}
@@ -150,12 +154,12 @@ export function LenteRow({
         )}
       </td>
       {isAdmin && (
-        <td className="px-5 py-4 text-right">
+        <td className="direita">
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => setEditando(true)}
-              className="text-xs font-semibold text-[#8a8078] hover:text-[#221d19] hover:underline"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-suave transition hover:bg-superficie-3 hover:text-texto"
             >
               Editar
             </button>

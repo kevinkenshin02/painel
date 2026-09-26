@@ -1,129 +1,245 @@
 @import "tailwindcss";
 
-:root {
-  --background: #faf7f2;
-  --foreground: #221d19;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-brand: var(--font-poppins);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d8cfc2;
-  border-radius: 4px;
-}
-
 /* ---------------------------------------------------------------------
-   Tema escuro — sobrescreve as classes utilitárias de cor hexadecimal
-   fixa usadas em todo o app, sem precisar reescrever cada componente.
+   Painel Tanaka 2.0 — cores do site (preto fosco, filetes dourados,
+   degradê do sol). O tema escuro é o padrão; data-theme="light" no <html>
+   troca para o claro. Use sempre as cores pelos nomes abaixo
+   (bg-superficie, text-suave, border-borda...), nunca hexadecimal solto.
    --------------------------------------------------------------------- */
 
-[data-theme="dark"] {
+:root {
+  --fundo: #0d0c0b;
+  --superficie: #15120f;
+  --superficie-2: #1c1814;
+  --superficie-3: #26211b;
+  --borda: rgba(224, 166, 61, 0.14);
+  --borda-forte: rgba(224, 166, 61, 0.34);
+  --texto: #f3ede4;
+  --texto-2: #d0c6b6;
+  --suave: #9b9082;
+  --ouro: #e0a63d;
+  --sucesso: #5cc48a;
+  --sucesso-fundo: rgba(92, 196, 138, 0.14);
+  --perigo: #f07466;
+  --perigo-fundo: rgba(224, 57, 47, 0.16);
+  --aviso: #f3bd55;
+  --aviso-fundo: rgba(249, 178, 51, 0.14);
+  --info: #8fb3e3;
+  --info-fundo: rgba(143, 179, 227, 0.14);
+  --sombra: 0 18px 40px -26px rgba(0, 0, 0, 0.95);
+  --brilho-topo: rgba(249, 178, 51, 0.07);
+
+  /* iguais nos dois temas: marca e menu lateral (sempre escuro) */
+  --sol: #f9b233;
+  --rubi: #e0392f;
+  --sobre-sol: #1f1208;
+  --lat-fundo: #0a0908;
+  --lat-cartao: #13110e;
+  --lat-texto: #f3ede4;
+  --lat-suave: #a89d8e;
+  --lat-borda: rgba(224, 166, 61, 0.18);
+
   color-scheme: dark;
 }
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #4a4038;
+[data-theme="light"] {
+  --fundo: #f4eee4;
+  --superficie: #fffdf9;
+  --superficie-2: #f8f2e8;
+  --superficie-3: #eee4d4;
+  --borda: rgba(138, 98, 34, 0.16);
+  --borda-forte: rgba(168, 116, 28, 0.4);
+  --texto: #1f1a16;
+  --texto-2: #463d35;
+  --suave: #776c61;
+  --ouro: #a0701b;
+  --sucesso: #2c7d4f;
+  --sucesso-fundo: #e3f1e8;
+  --perigo: #b8392b;
+  --perigo-fundo: #fbe6e1;
+  --aviso: #92600a;
+  --aviso-fundo: #fbefd3;
+  --info: #365f9c;
+  --info-fundo: #e5eef9;
+  --sombra: 0 14px 34px -26px rgba(80, 55, 20, 0.55);
+  --brilho-topo: rgba(249, 178, 51, 0.12);
+  color-scheme: light;
 }
 
-/* Superfícies */
-[data-theme="dark"] .bg-\[\#faf7f2\] {
-  background-color: #1c1815;
-}
-[data-theme="dark"] .bg-white {
-  background-color: #262019;
-}
-[data-theme="dark"] .bg-\[\#f7f1e6\] {
-  background-color: #2f2820;
-}
-[data-theme="dark"] .bg-\[\#fdf3f1\] {
-  background-color: #2a1917;
-}
-
-/* Bordas */
-[data-theme="dark"] .border-\[\#eee3d3\] {
-  border-color: #3a3226;
-}
-[data-theme="dark"] .border-\[\#f3ede4\] {
-  border-color: #322b21;
-}
-[data-theme="dark"] .border-\[\#e4dbcb\] {
-  border-color: #443a2c;
-}
-
-/* Texto */
-[data-theme="dark"] .text-\[\#221d19\] {
-  color: #f3ede4;
-}
-[data-theme="dark"] .text-\[\#4a4038\] {
-  color: #d9cfc3;
-}
-[data-theme="dark"] .text-\[\#8a8078\] {
-  color: #a89e93;
-}
-[data-theme="dark"] .text-\[\#6b6157\] {
-  color: #bdb3a7;
-}
-[data-theme="dark"] .text-\[\#c0472b\] {
-  color: #f0796a;
-}
-[data-theme="dark"] .text-\[\#8a6a1f\] {
-  color: #e0b25a;
-}
-[data-theme="dark"] .text-\[\#c98a1f\] {
-  color: #e0b25a;
-}
-[data-theme="dark"] .text-\[\#a5631a\] {
-  color: #d99a4e;
-}
-[data-theme="dark"] .text-\[\#3a8f5b\] {
-  color: #6fcf97;
-}
-[data-theme="dark"] .text-\[\#1a9c4f\] {
-  color: #4ad080;
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-superficie-2: var(--superficie-2);
+  --color-superficie-3: var(--superficie-3);
+  --color-borda: var(--borda);
+  --color-borda-forte: var(--borda-forte);
+  --color-texto: var(--texto);
+  --color-texto-2: var(--texto-2);
+  --color-suave: var(--suave);
+  --color-ouro: var(--ouro);
+  --color-sol: var(--sol);
+  --color-rubi: var(--rubi);
+  --color-sobre-sol: var(--sobre-sol);
+  --color-sucesso: var(--sucesso);
+  --color-sucesso-fundo: var(--sucesso-fundo);
+  --color-perigo: var(--perigo);
+  --color-perigo-fundo: var(--perigo-fundo);
+  --color-aviso: var(--aviso);
+  --color-aviso-fundo: var(--aviso-fundo);
+  --color-info: var(--info);
+  --color-info-fundo: var(--info-fundo);
+  --color-lat-fundo: var(--lat-fundo);
+  --color-lat-cartao: var(--lat-cartao);
+  --color-lat-texto: var(--lat-texto);
+  --color-lat-suave: var(--lat-suave);
+  --color-lat-borda: var(--lat-borda);
+  --font-sans: var(--font-work), system-ui, "Segoe UI", sans-serif;
+  --font-titulo: var(--font-shippori), Georgia, serif;
+  --shadow-cartao: var(--sombra);
 }
 
-/* Fundos de selos/badges */
-[data-theme="dark"] .bg-\[\#e3f1e8\] {
-  background-color: #1c3327;
-}
-[data-theme="dark"] .bg-\[\#f3ede4\] {
-  background-color: #33291f;
-}
-[data-theme="dark"] .bg-\[\#fdf0d5\] {
-  background-color: #3d2f14;
-}
-[data-theme="dark"] .bg-\[\#fde8e2\] {
-  background-color: #3d211c;
-}
-[data-theme="dark"] .bg-\[\#fdeccb\] {
-  background-color: #3a2a12;
-}
-[data-theme="dark"] .bg-\[\#e9f9ef\] {
-  background-color: #173a26;
+html,
+body {
+  height: 100%;
 }
 
-/* Estados hover */
-[data-theme="dark"] .hover\:bg-\[\#f7f1e6\]:hover {
-  background-color: #362e24;
+body {
+  background:
+    radial-gradient(1100px 520px at 78% -12%, var(--brilho-topo), transparent 62%),
+    var(--fundo);
+  color: var(--texto);
+  font-feature-settings: "tnum" 0;
 }
-[data-theme="dark"] .hover\:bg-\[\#d7f4e1\]:hover {
-  background-color: #1f4a30;
+
+::selection {
+  background: rgba(249, 178, 51, 0.35);
 }
-[data-theme="dark"] .hover\:text-\[\#c0472b\]:hover {
-  color: #f0796a;
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--superficie-3);
+  border-radius: 6px;
+}
+
+/* ícones de calendário/relógio dos campos de data seguem o tema */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+@layer components {
+  /* filete de LED dourado no topo de um cartão (igual às seções do site) */
+  .filete {
+    position: relative;
+  }
+  .filete::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent 0%, var(--borda-forte) 18%, var(--sol) 50%, var(--borda-forte) 82%, transparent 100%);
+    opacity: 0.9;
+  }
+
+  .degrade-sol {
+    background-image: linear-gradient(120deg, var(--sol) 0%, var(--rubi) 100%);
+  }
+
+  .numero {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* cartões coloridos da Visão Geral: tons do pôr do sol (iguais nos dois temas) */
+  .kpi-sol { background-image: linear-gradient(135deg, #f9b233 0%, #e0392f 100%); color: #1f1208; }
+  .kpi-ambar { background-image: linear-gradient(135deg, #f5cd72 0%, #d98b22 100%); color: #1f1208; }
+  .kpi-rubi { background-image: linear-gradient(135deg, #e54a3c 0%, #9c1d22 100%); color: #fff6f2; }
+  .kpi-vinho { background-image: linear-gradient(135deg, #8f2739 0%, #4a1120 100%); color: #fde9ec; }
+  .kpi-sakura { background-image: linear-gradient(135deg, #e98aa0 0%, #b34662 100%); color: #fff7f9; }
+  .kpi-ouro { background-image: linear-gradient(135deg, #dcb66c 0%, #8d6424 100%); color: #1b1206; }
+  .kpi-noite { background-image: linear-gradient(135deg, #43598a 0%, #1b2744 100%); color: #eef2fb; }
+  .kpi-jade { background-image: linear-gradient(135deg, #43a888 0%, #1c5c49 100%); color: #f1fbf7; }
+
+  /* tabelas: cabeçalho discreto, linhas com fio fino e linha de totais em destaque */
+  .tabela {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+  }
+  .tabela thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--superficie-2);
+    color: var(--suave);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 13px 16px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--borda);
+  }
+  .tabela tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--borda);
+    color: var(--texto-2);
+    vertical-align: middle;
+  }
+  .tabela tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .tabela tbody tr:hover td {
+    background: color-mix(in srgb, var(--superficie-3) 45%, transparent);
+  }
+  .tabela tfoot td {
+    padding: 14px 16px;
+    font-weight: 700;
+    color: var(--texto);
+    background: color-mix(in srgb, var(--sol) 10%, var(--superficie));
+    border-top: 1px solid var(--borda-forte);
+  }
+  .tabela .direita {
+    text-align: right;
+  }
+  .tabela td.destaque {
+    color: var(--texto);
+    font-weight: 600;
+  }
+}
+
+/* impressão e PDF: some com o menu e os botões, papel branco */
+@media print {
+  :root,
+  [data-theme="light"] {
+    --fundo: #ffffff;
+    --superficie: #ffffff;
+    --superficie-2: #f4efe6;
+    --superficie-3: #ece4d6;
+    --borda: #e2d8c8;
+    --borda-forte: #cdb48a;
+    --texto: #1a1612;
+    --texto-2: #2f2923;
+    --suave: #6b6157;
+    --ouro: #8a5f14;
+    --sombra: none;
+    color-scheme: light;
+  }
+  body {
+    background: #fff;
+  }
+  .nao-imprimir {
+    display: none !important;
+  }
 }

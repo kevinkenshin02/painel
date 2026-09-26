@@ -1,89 +1,72 @@
+import { History, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusPagamento } from "@/generated/prisma/enums";
-import { formatCurrency, toDateInputValue } from "@/lib/format";
-import { criarVenda, excluirVenda } from "./actions";
-import { NovaVendaForm } from "./NovaVendaForm";
+import { formatCurrency } from "@/lib/format";
+import { mesAtualCalendario } from "@/lib/datas";
+import { excluirVenda } from "./actions";
 import { VendasTable } from "./VendasTable";
-import { getFuncionarioLogado } from "@/lib/currentUser";
+import { Cabecalho } from "@/components/ui/Cabecalho";
+import { BotaoLink } from "@/components/ui/Botao";
+import { Cartao, TituloCartao } from "@/components/ui/Cartao";
+import { Chip } from "@/components/ui/Etiqueta";
+import { Aviso } from "@/components/ui/Aviso";
 
 export const dynamic = "force-dynamic";
 
 export default async function VendasPage() {
-  const hoje = new Date();
   const modoTeste = process.env.MP_POINT_TEST_MODE === "true";
-  const logado = await getFuncionarioLogado();
-  const isAdmin = logado?.isAdmin ?? false;
+  const mes = mesAtualCalendario();
 
-  const [vendas, armacoesDisponiveis, relogiosDisponiveis, lentesDisponiveis] = await Promise.all([
-    prisma.venda.findMany({
-      orderBy: { dataVenda: "desc" },
-      take: 50,
-      include: { funcionario: true },
-    }),
-    prisma.armacaoEstoque.findMany({
-      where: { ativo: true, quantidade: { gt: 0 } },
-      orderBy: { marcaModelo: "asc" },
-    }),
-    prisma.relogioEstoque.findMany({
-      where: { ativo: true, quantidade: { gt: 0 } },
-      orderBy: { modeloReferencia: "asc" },
-    }),
-    prisma.lenteEstoque.findMany({
-      where: { ativo: true, quantidade: { gt: 0 } },
-      orderBy: { descricao: "asc" },
-    }),
-  ]);
+  const vendas = await prisma.venda.findMany({
+    orderBy: [{ dataVenda: "desc" }, { id: "desc" }],
+    take: 200,
+    include: { funcionario: true },
+  });
 
-  const totalMes = vendas
-    .filter(
-      (v) =>
-        v.statusPagamento === StatusPagamento.PAGO &&
-        v.dataVenda.getMonth() === hoje.getMonth() &&
-        v.dataVenda.getFullYear() === hoje.getFullYear()
-    )
-    .reduce((sum, v) => sum + v.valorVendido, 0);
+  const pagasMes = vendas.filter(
+    (v) => v.statusPagamento === StatusPagamento.PAGO && v.dataVenda >= mes.inicio && v.dataVenda < mes.fim
+  );
+  const totalMes = pagasMes.reduce((sum, v) => sum + v.valorVendido, 0);
+  const pendentes = vendas.filter((v) => v.statusPagamento === StatusPagamento.PENDENTE).length;
 
   return (
-    <div className="flex flex-col gap-7">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[26px] font-bold text-[#221d19]">Vendas</h1>
-          <p className="mt-1 text-sm text-[#8a8078]">
-            Registro de vendas e cobrança na maquininha.
-          </p>
-        </div>
-        <div className="rounded-xl border border-[#eee3d3] bg-white px-5 py-3 text-right">
-          <div className="text-xs font-semibold tracking-wide text-[#8a8078] uppercase">
-            Vendas pagas este mês
-          </div>
-          <div className="mt-1 text-xl font-bold text-[#221d19]">{formatCurrency(totalMes)}</div>
-        </div>
-      </div>
+    <>
+      <Cabecalho
+        secao="Vendas"
+        titulo="Vendas realizadas"
+        descricao="As últimas vendas registradas, com a situação do pagamento."
+        acoes={
+          <BotaoLink href="/vendas/nova" variante="primario" icone={Plus}>
+            Nova venda
+          </BotaoLink>
+        }
+      >
+        <Chip>
+          Pago em {mes.nome}: <span className="numero text-texto">{formatCurrency(totalMes)}</span>
+        </Chip>
+        <Chip>
+          {pagasMes.length} {pagasMes.length === 1 ? "venda paga" : "vendas pagas"} no mês
+        </Chip>
+        {pendentes > 0 && <Chip>{pendentes} aguardando maquininha</Chip>}
+      </Cabecalho>
 
       {modoTeste && (
-        <div className="rounded-lg border border-[#f6b23b] bg-[#fdf0d5] px-4 py-3 text-xs font-medium text-[#8a6a1f]">
-          Modo de teste ativo (MP_POINT_TEST_MODE=true) — cobranças no cartão usam o
-          terminal virtual do Mercado Pago, sem mexer na maquininha real nem em dinheiro de
-          verdade.
-        </div>
+        <Aviso tom="aviso">
+          Modo de teste ligado: as cobranças no cartão usam o terminal virtual do Mercado Pago, sem mexer na maquininha
+          real nem em dinheiro de verdade.
+        </Aviso>
       )}
 
-      <div className="rounded-xl border-2 border-[#f6b23b] bg-white pb-6 shadow-sm">
-        <div className="rounded-t-lg bg-gradient-to-r from-[#f6b23b] to-[#e0472e] px-6 py-3">
-          <h2 className="text-sm font-bold text-white">Nova venda</h2>
-        </div>
-
-        <NovaVendaForm
-          action={criarVenda}
-          hoje={toDateInputValue(hoje)}
-          armacoes={armacoesDisponiveis}
-          relogios={relogiosDisponiveis}
-          lentes={lentesDisponiveis}
-          isAdmin={isAdmin}
+      <Cartao filete className="p-6">
+        <TituloCartao
+          selo="Histórico"
+          icone={History}
+          titulo="Vendas"
+          descricao="Mostra as 200 mais recentes. Excluir uma venda devolve o item ao estoque."
+          className="mb-5"
         />
-      </div>
-
-      <VendasTable vendas={vendas} excluir={excluirVenda} modoTeste={modoTeste} />
-    </div>
+        <VendasTable vendas={vendas} excluir={excluirVenda} modoTeste={modoTeste} />
+      </Cartao>
+    </>
   );
 }

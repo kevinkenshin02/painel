@@ -16,7 +16,15 @@ function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export async function criarVenda(formData: FormData) {
+export async function criarVenda(formData: FormData): Promise<{ erro?: string; ok?: boolean }> {
+  try {
+    return await registrarVenda(formData);
+  } catch (err) {
+    return { erro: err instanceof Error ? err.message : "Não foi possível registrar a venda." };
+  }
+}
+
+async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?: boolean }> {
   const dataVenda = formData.get("dataVenda") as string;
   const clienteNome = (formData.get("clienteNome") as string)?.trim() || null;
   const categoria = formData.get("categoria") as CategoriaVenda;
@@ -29,7 +37,7 @@ export async function criarVenda(formData: FormData) {
   const itemEstoque = (formData.get("itemEstoque") as string) || "";
 
   if (!dataVenda || !categoria || !descricao || !canalOrigem || !formaPagamento) {
-    throw new Error("Preencha todos os campos obrigatórios.");
+    return { erro: "Preencha todos os campos obrigatórios." };
   }
 
   const [tipoItem, idItemRaw] = itemEstoque.split(":");
@@ -155,13 +163,19 @@ export async function criarVenda(formData: FormData) {
         where: { id: venda.id },
         data: { statusPagamento: StatusPagamento.RECUSADO },
       });
-      throw err;
+      revalidatePath("/vendas", "layout");
+      revalidatePath("/");
+      const motivo = err instanceof Error ? err.message : "erro desconhecido";
+      return {
+        erro: `A venda foi registrada, mas a cobrança não chegou na maquininha (${motivo}). Ela ficou como "Recusado" — exclua e registre de novo, ou use outra forma de pagamento.`,
+      };
     }
   }
 
-  revalidatePath("/vendas");
+  revalidatePath("/vendas", "layout");
   revalidatePath("/estoque");
   revalidatePath("/");
+  return { ok: true };
 }
 
 export async function excluirVenda(formData: FormData) {
@@ -194,7 +208,7 @@ export async function excluirVenda(formData: FormData) {
     await tx.venda.delete({ where: { id } });
   });
 
-  revalidatePath("/vendas");
+  revalidatePath("/vendas", "layout");
   revalidatePath("/estoque");
   revalidatePath("/");
 }
@@ -209,5 +223,5 @@ export async function simularPagamentoTeste(formData: FormData) {
   }
 
   await simularEventoCobranca(venda.mercadoPagoOrderId, "processed");
-  revalidatePath("/vendas");
+  revalidatePath("/vendas", "layout");
 }

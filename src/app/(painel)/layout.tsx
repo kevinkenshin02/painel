@@ -10,9 +10,11 @@ export default async function PainelLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <div className="flex h-screen flex-1 overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden">
       <Sidebar nomeFuncionario={funcionario.nome} isAdmin={funcionario.isAdmin} />
-      <main className="flex-1 overflow-y-auto px-10 py-8">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-6 px-8 py-7">{children}</div>
+      </main>
     </div>
   );
 }
