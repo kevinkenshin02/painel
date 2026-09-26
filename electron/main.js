@@ -1,7 +1,24 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const { spawn } = require("child_process");
+const fs = require("fs");
 const path = require("path");
 const http = require("http");
+
+// "Exportar PDF" dos relatórios: gera o PDF da própria tela (versão para impressão), pergunta onde salvar e abre.
+ipcMain.handle("salvar-pdf", async (event, nomeArquivo) => {
+  const janela = BrowserWindow.fromWebContents(event.sender);
+  const nome = String(nomeArquivo || "relatorio-tanaka.pdf").replace(/[\\/:*?"<>|]/g, "-");
+  const { canceled, filePath } = await dialog.showSaveDialog(janela, {
+    title: "Salvar relatório em PDF",
+    defaultPath: path.join(app.getPath("documents"), nome.endsWith(".pdf") ? nome : `${nome}.pdf`),
+    filters: [{ name: "PDF", extensions: ["pdf"] }],
+  });
+  if (canceled || !filePath) return { ok: false };
+  const dados = await event.sender.printToPDF({ pageSize: "A4", printBackground: true, margins: { marginType: "default" } });
+  fs.writeFileSync(filePath, dados);
+  shell.openPath(filePath);
+  return { ok: true, caminho: filePath };
+});
 
 const PORT = process.env.DESKTOP_PORT || "3100";
 const PROJECT_ROOT = path.join(__dirname, "..");
@@ -72,6 +89,11 @@ function createWindow() {
     title: "Óticas Tanaka | Painel de gestão",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "icon.ico"),
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   });
 
   mainWindow.loadURL(`http://localhost:${PORT}`);

@@ -242,4 +242,43 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   .nao-imprimir {
     display: none !important;
   }
+  /* o conteúdo rola dentro do <main>: na impressão ele precisa crescer para sair em várias páginas */
+  .layout-painel,
+  .layout-conteudo {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .layout-conteudo > div {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .tabela {
+    font-size: 10.5px;
+  }
+  .tabela thead th {
+    position: static;
+    white-space: normal;
+  }
+  .tabela thead th,
+  .tabela tbody td,
+  .tabela tfoot td {
+    padding: 6px 8px;
+  }
+  /* "Totais" só no fim da tabela (o navegador repetiria em cada página) */
+  .tabela tfoot {
+    display: table-row-group;
+  }
+  .tabela tr {
+    break-inside: avoid;
+  }
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  @page {
+    margin: 12mm;
+  }
 }

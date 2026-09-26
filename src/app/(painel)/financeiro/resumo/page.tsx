@@ -55,7 +55,7 @@ export default async function ResumoMesPage(props: PageProps<"/financeiro/resumo
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 print:grid-cols-4">
         <CartaoKpi tom="sol" icone={BadgeDollarSign} valor={formatCurrency(r.receitaTotal)} rotulo="Receitas" detalhe={`${r.qtdVendas} vendas · ${r.qtdOs} OS entregues`} />
         <CartaoKpi tom="ouro" icone={Package} valor={formatCurrency(r.custoVendas)} rotulo="Custo dos produtos vendidos" detalhe={`Lucro bruto ${formatPercent(margemBruta)}`} />
         <CartaoKpi tom="vinho" icone={Receipt} valor={formatCurrency(r.despesas)} rotulo="Despesas do mês" detalhe={`${formatCurrency(r.despesasEmAberto)} ainda em aberto`} />
