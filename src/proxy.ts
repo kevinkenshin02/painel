@@ -15,5 +15,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|login|consulta|recibo|api).*)"],
+  // além das páginas públicas, deixa passar direto qualquer arquivo estático
+  // (imagens da pasta public/, como as da tela de entrada) sem exigir login
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|login|consulta|recibo|api|marca|.*\\.(?:png|jpe?g|gif|webp|svg|ico|css|js|map|woff2?|ttf)$).*)",
+  ],
 };
