@@ -48,10 +48,8 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
 
   return (
     <aside className="nao-imprimir flex h-screen w-[272px] shrink-0 flex-col gap-4 border-r border-lat-borda bg-lat-fundo px-4 py-5 text-lat-texto">
-      <Link
-        href="/"
-        className="filete block rounded-2xl border border-lat-borda bg-lat-cartao px-5 pt-5 pb-4 transition hover:border-[rgba(224,166,61,0.4)]"
-      >
+      {/* logo solta no menu (sem quadro atrás), ocupando a largura toda */}
+      <Link href="/" className="-mx-1 block px-0 pt-2 pb-1 transition hover:opacity-90">
         <Image
           src="/marca/logo-tanaka.png"
           alt="Tanaka Ótica e Relojoaria"
@@ -61,7 +59,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
           unoptimized
           className="h-auto w-full"
         />
-        <div className="mt-3 text-center text-[10px] font-semibold tracking-[0.24em] text-lat-suave uppercase">
+        <div className="mt-3 text-center text-[10px] font-semibold tracking-[0.28em] text-lat-suave uppercase">
           Painel de gestão
         </div>
       </Link>

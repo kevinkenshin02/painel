@@ -7,6 +7,7 @@ import { getFuncionarioLogado } from "@/lib/currentUser";
 import { movimentarEstoque } from "@/lib/produtos";
 import { lerNFe, normalizarCodigo } from "@/lib/nfe";
 import { soDigitos } from "@/lib/format";
+import { gerarContasDasNotas } from "@/lib/financeiro";
 
 export type DecisaoItem =
   | { item: number; acao: "vincular"; produtoId: number; atualizarCusto: boolean; precoVenda: number | null }
@@ -181,9 +182,13 @@ export async function lancarNota(xml: string, decisoes: DecisaoItem[]): Promise<
     return n;
   });
 
+  // as parcelas da nota já aparecem em Contas a pagar
+  await gerarContasDasNotas(prisma);
+
   revalidatePath("/estoque", "layout");
   revalidatePath("/produtos", "layout");
   revalidatePath("/fornecedores", "layout");
+  revalidatePath("/financeiro", "layout");
   revalidatePath("/");
   return {
     ok: true,

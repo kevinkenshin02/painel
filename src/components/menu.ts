@@ -88,10 +88,10 @@ export const MENU: GrupoMenu[] = [
     icone: Landmark,
     admin: true,
     itens: [
-      { rotulo: "Contas a pagar" },
-      { rotulo: "Contas a receber" },
+      { rotulo: "Contas a pagar", href: "/financeiro/contas-a-pagar" },
+      { rotulo: "Contas a receber", href: "/financeiro/contas-a-receber" },
       { rotulo: "Despesas fixas", href: "/despesas" },
-      { rotulo: "Resumo do mês" },
+      { rotulo: "Resumo do mês", href: "/financeiro/resumo" },
     ],
   },
   {

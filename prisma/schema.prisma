@@ -81,6 +81,7 @@ model Fornecedor {
 
   produtos Produto[]
   notas    NotaEntrada[]
+  contas   ContaPagar[]
 
   @@map("fornecedores")
 }
@@ -159,7 +160,8 @@ model NotaEntrada {
   funcionario   Funcionario?      @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
   criadoEm      DateTime          @default(now())
 
-  itens NotaEntradaItem[]
+  itens  NotaEntradaItem[]
+  contas ContaPagar[]
 
   @@map("notas_entrada")
 }
@@ -437,15 +439,64 @@ model PagamentoOS {
 // ---------------------------------------------------------------------------
 
 model DespesaFixa {
-  id           Int      @id @default(autoincrement())
-  nome         String
-  valor        Float
-  ativo        Boolean  @default(true)
-  observacao   String?
-  criadoEm     DateTime @default(now())
-  atualizadoEm DateTime @updatedAt
+  id            Int          @id @default(autoincrement())
+  nome          String
+  valor         Float
+  /// dia do mês em que vence (vira uma conta a pagar todo mês)
+  diaVencimento Int          @default(10)
+  ativo         Boolean      @default(true)
+  observacao    String?
+  criadoEm      DateTime     @default(now())
+  atualizadoEm  DateTime     @updatedAt
+
+  contas ContaPagar[]
 
   @@map("despesas_fixas")
+}
+
+// ---------------------------------------------------------------------------
+// Financeiro: contas a pagar (avulsas, despesas fixas do mês e parcelas das notas)
+// ---------------------------------------------------------------------------
+
+enum OrigemConta {
+  AVULSA
+  DESPESA_FIXA
+  NOTA
+}
+
+model ContaPagar {
+  id             Int             @id @default(autoincrement())
+  descricao      String
+  categoria      String?
+  fornecedorId   Int?
+  fornecedor     Fornecedor?     @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  valor          Float
+  /// data de calendário (meia-noite UTC do dia)
+  vencimento     DateTime
+  pagoEm         DateTime?
+  valorPago      Float?
+  formaPagamento FormaPagamento?
+  /// pago com dinheiro da gaveta: também sai do caixa (despesa)
+  pagoPeloCaixa  Boolean         @default(false)
+  /// despesa fixa/parcela que não vale neste mês (não entra nos totais)
+  cancelada      Boolean         @default(false)
+  origem         OrigemConta     @default(AVULSA)
+  despesaFixaId  Int?
+  despesaFixa    DespesaFixa?    @relation(fields: [despesaFixaId], references: [id], onDelete: SetNull)
+  /// mês da despesa fixa, "2026-09"
+  competencia    String?
+  notaId         Int?
+  nota           NotaEntrada?    @relation(fields: [notaId], references: [id], onDelete: SetNull)
+  parcela        String?
+  observacoes    String?
+  funcionarioId  Int?
+  funcionario    Funcionario?    @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm       DateTime        @default(now())
+  atualizadoEm   DateTime        @updatedAt
+
+  @@unique([despesaFixaId, competencia])
+  @@index([vencimento])
+  @@map("contas_pagar")
 }
 
 // ---------------------------------------------------------------------------
@@ -486,6 +537,7 @@ model Funcionario {
   caixasFechados   Caixa[]            @relation("CaixaFechamento")
   movimentosCaixa  MovimentoCaixa[]
   pagamentosOS     PagamentoOS[]
+  contasPagar      ContaPagar[]
 
   @@map("funcionarios")
 }

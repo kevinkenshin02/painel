@@ -20,6 +20,7 @@ import { StatusOS, StatusPagamento } from "@/generated/prisma/enums";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { hojeCalendario, mesAtualCalendario } from "@/lib/datas";
 import { precisaAtencao } from "@/lib/produtos";
+import { gerarContasDoMes, mesDe, resumoDoMes } from "@/lib/financeiro";
 import { getFuncionarioLogado } from "@/lib/currentUser";
 import { Cabecalho } from "@/components/ui/Cabecalho";
 import { BotaoLink } from "@/components/ui/Botao";
@@ -38,7 +39,7 @@ export default async function VisaoGeral() {
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [vendasMes, emAndamento, atrasadas, prontas, clientesAtivos, proximas, config, produtos, despesasFixas, clientesNovos] =
+  const [vendasMes, emAndamento, atrasadas, prontas, clientesAtivos, proximas, config, produtos, resumo, clientesNovos] =
     await Promise.all([
       prisma.venda.findMany({
         where: { statusPagamento: StatusPagamento.PAGO, dataVenda: { gte: mes.inicio, lt: mes.fim } },
@@ -55,17 +56,17 @@ export default async function VisaoGeral() {
       }),
       prisma.configuracao.findUnique({ where: { id: 1 } }),
       prisma.produto.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true, estoqueMinimo: true } }),
-      isAdmin ? prisma.despesaFixa.findMany({ where: { ativo: true }, select: { valor: true } }) : Promise.resolve([]),
+      // mesmo cálculo do Financeiro → Resumo do mês (vendas + OS entregues − custo − contas do mês)
+      isAdmin
+        ? gerarContasDoMes(prisma, mesDe()).then(() => resumoDoMes(prisma, mesDe()))
+        : Promise.resolve(null),
       prisma.cliente.count({ where: { criadoEm: { gte: mes.inicio } } }),
     ]);
 
   // ----- vendas do mês -----
   const totalMes = vendasMes.reduce((s, v) => s + v.valorVendido, 0);
-  const custoMes = vendasMes.reduce((s, v) => s + v.custoTotal, 0);
   const vendasHoje = vendasMes.filter((v) => v.dataVenda.getTime() === hoje.getTime());
   const totalHoje = vendasHoje.reduce((s, v) => s + v.valorVendido, 0);
-  const despesasMes = despesasFixas.reduce((s, d) => s + d.valor, 0);
-  const lucroMes = totalMes - custoMes - despesasMes;
 
   const porDia = Array.from({ length: mes.dias }, (_, i) => ({ dia: i + 1, valor: 0 }));
   for (const v of vendasMes) porDia[v.dataVenda.getUTCDate() - 1].valor += v.valorVendido;
@@ -129,14 +130,14 @@ export default async function VisaoGeral() {
           detalhe={`${vendasHoje.length} ${vendasHoje.length === 1 ? "venda" : "vendas"} hoje`}
           href="/vendas"
         />
-        {isAdmin ? (
+        {isAdmin && resumo ? (
           <CartaoKpi
-            tom="jade"
+            tom={resumo.resultado >= 0 ? "jade" : "rubi"}
             icone={TrendingUp}
-            valor={formatCurrency(lucroMes)}
-            rotulo="Lucro do mês"
-            detalhe={`Vendas − custo dos produtos − despesas fixas (${formatCurrency(despesasMes)})`}
-            href="/despesas"
+            valor={formatCurrency(resumo.resultado)}
+            rotulo="Resultado do mês"
+            detalhe={`Receitas ${formatCurrency(resumo.receitaTotal)} − custo − contas do mês (${formatCurrency(resumo.despesas)})`}
+            href="/financeiro/resumo"
           />
         ) : (
           <CartaoKpi

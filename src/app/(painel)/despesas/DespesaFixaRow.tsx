@@ -13,6 +13,7 @@ type Despesa = {
   id: number;
   nome: string;
   valor: number;
+  diaVencimento: number;
   observacao: string | null;
   ativo: boolean;
 };
@@ -37,7 +38,7 @@ export function DespesaFixaRow({
   if (editando) {
     return (
       <tr className="bg-superficie-2">
-        <td colSpan={5}>
+        <td colSpan={6}>
           <form action={handleSalvar} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-xs">
               <span className="font-semibold text-suave">Nome</span>
@@ -54,6 +55,10 @@ export function DespesaFixaRow({
                 defaultValue={despesa.valor}
                 className={inputClass}
               />
+            </label>
+            <label className="flex flex-col gap-1 text-xs">
+              <span className="font-semibold text-suave">Vence dia</span>
+              <input type="number" name="diaVencimento" required min={1} max={31} defaultValue={despesa.diaVencimento} className={`${inputClass} w-20`} />
             </label>
             <label className="flex flex-1 min-w-[180px] flex-col gap-1 text-xs">
               <span className="font-semibold text-suave">Observação</span>
@@ -87,7 +92,8 @@ export function DespesaFixaRow({
     <tr>
       <td className="destaque">{despesa.nome}</td>
       <td className="numero">{formatCurrency(despesa.valor)}</td>
-      <td >{despesa.observacao || "—"}</td>
+      <td className="numero">Dia {despesa.diaVencimento}</td>
+      <td>{despesa.observacao || "—"}</td>
       <td>
         <ToggleAtivoButton id={despesa.id} ativo={despesa.ativo} action={alternarAtivo} />
       </td>

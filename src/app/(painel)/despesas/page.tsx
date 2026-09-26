@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { ListPlus, Receipt } from "lucide-react";
+import { Landmark, ListPlus, Receipt } from "lucide-react";
+import { BotaoLink } from "@/components/ui/Botao";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import { criarDespesasFixasEmLote, alternarAtivoDespesaFixa, excluirDespesaFixa } from "./actions";
@@ -30,7 +31,12 @@ export default async function DespesasPage() {
       <Cabecalho
         secao="Financeiro"
         titulo="Despesas fixas"
-        descricao="Aluguel, condomínio, internet, salários... Entram todo mês na conta do lucro da Visão Geral."
+        descricao="Aluguel, condomínio, internet, salários... Todo mês cada uma vira uma conta a pagar com o vencimento no dia escolhido."
+        acoes={
+          <BotaoLink href="/financeiro/contas-a-pagar" icone={Landmark}>
+            Contas a pagar
+          </BotaoLink>
+        }
       >
         <Chip>
           Por mês: <span className="numero text-texto">{formatCurrency(totalMensal)}</span>
@@ -61,6 +67,7 @@ export default async function DespesasPage() {
               <tr>
                 <th>Nome</th>
                 <th>Valor mensal</th>
+                <th>Vencimento</th>
                 <th>Observação</th>
                 <th>Situação</th>
                 <th />
@@ -69,7 +76,7 @@ export default async function DespesasPage() {
             <tbody>
               {despesas.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-suave">
+                  <td colSpan={6} className="py-10 text-center text-suave">
                     Nenhuma despesa fixa cadastrada ainda.
                   </td>
                 </tr>
@@ -83,7 +90,7 @@ export default async function DespesasPage() {
                 <tr>
                   <td>Total mensal (ativas)</td>
                   <td className="numero">{formatCurrency(totalMensal)}</td>
-                  <td colSpan={3} />
+                  <td colSpan={4} />
                 </tr>
               </tfoot>
             )}

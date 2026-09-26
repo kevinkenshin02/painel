@@ -13,11 +13,12 @@ function linhasVazias(qtd: number, startId: number) {
 export function DespesasLoteForm({
   action,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (formData: FormData) => Promise<{ erro?: string; ok?: boolean }>;
 }) {
   const [linhas, setLinhas] = useState(() => linhasVazias(ROWS_INICIAIS, 0));
   const [nextId, setNextId] = useState(ROWS_INICIAIS);
   const [formKey, setFormKey] = useState(0);
+  const [erro, setErro] = useState<string | null>(null);
 
   function adicionarLinha() {
     setLinhas((prev) => [...prev, { id: nextId }]);
@@ -29,7 +30,12 @@ export function DespesasLoteForm({
   }
 
   async function handleAction(formData: FormData) {
-    await action(formData);
+    setErro(null);
+    const r = await action(formData);
+    if (r.erro) {
+      setErro(r.erro);
+      return;
+    }
     setLinhas(linhasVazias(ROWS_INICIAIS, nextId));
     setNextId((n) => n + ROWS_INICIAIS);
     setFormKey((k) => k + 1);
@@ -51,6 +57,12 @@ export function DespesasLoteForm({
                 <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Valor mensal (R$)</span>
               )}
               <input type="number" name="valor[]" min={0} step="0.01" placeholder="0,00" className={inputClass} />
+            </label>
+            <label className="flex w-32 flex-col gap-1.5 text-sm">
+              {index === 0 && (
+                <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Vence dia</span>
+              )}
+              <input type="number" name="dia[]" min={1} max={31} defaultValue={10} className={inputClass} />
             </label>
             <button
               type="button"
@@ -79,9 +91,10 @@ export function DespesasLoteForm({
           Salvar despesas
         </button>
       </div>
+      {erro && <p className="text-sm font-semibold text-perigo">{erro}</p>}
       <p className="text-xs text-suave">
-        Preencha quantas linhas quiser — linhas em branco são ignoradas. Cada uma fica ativa e
-        entra na conta todo mês.
+        Preencha quantas linhas quiser — linhas em branco são ignoradas. Cada uma vira uma conta a pagar todo mês,
+        vencendo no dia escolhido.
       </p>
     </form>
   );
