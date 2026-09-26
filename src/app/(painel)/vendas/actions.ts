@@ -13,6 +13,7 @@ import { criarCobrancaPoint, simularEventoCobranca } from "@/lib/mercadopago";
 import { getFuncionarioLogado } from "@/lib/currentUser";
 import { movimentarEstoque } from "@/lib/produtos";
 import { clienteDaOperacao } from "@/lib/clientes";
+import { registrarNoCaixa } from "@/lib/caixa";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   if (value === null || String(value).trim() === "") return fallback;
@@ -22,6 +23,7 @@ function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
 
 function revalidarVendas() {
   revalidatePath("/vendas", "layout");
+  revalidatePath("/caixa", "layout");
   revalidatePath("/estoque");
   revalidatePath("/produtos", "layout");
   revalidatePath("/clientes", "layout");
@@ -97,6 +99,17 @@ async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?:
         funcionarioId,
       });
     }
+    // dinheiro, Pix e "outro" entram no caixa na hora; o cartão entra quando a maquininha aprovar
+    if (statusPagamento === StatusPagamento.PAGO) {
+      await registrarNoCaixa(tx, {
+        tipo: "VENDA",
+        formaPagamento,
+        valor: valorVendido,
+        descricao: `Venda nº ${criada.id} — ${descricao}`,
+        vendaId: criada.id,
+        funcionarioId,
+      });
+    }
     return criada;
   });
 
@@ -145,6 +158,22 @@ export async function excluirVenda(formData: FormData) {
         vendaId: venda.id,
         funcionarioId: funcionario?.id ?? null,
       });
+    }
+
+    // o que essa venda colocou no caixa sai de novo (estorno), por forma de pagamento
+    const noCaixa = await tx.movimentoCaixa.findMany({ where: { vendaId: venda.id, tipo: { in: ["VENDA", "ESTORNO"] } } });
+    for (const forma of new Set(noCaixa.map((m) => m.formaPagamento))) {
+      const liquido = noCaixa.filter((m) => m.formaPagamento === forma).reduce((s, m) => s + m.valor, 0);
+      if (liquido > 0.004) {
+        await registrarNoCaixa(tx, {
+          tipo: "ESTORNO",
+          formaPagamento: forma,
+          valor: -liquido,
+          descricao: `Venda nº ${venda.id} excluída — ${venda.descricao}`,
+          vendaId: venda.id,
+          funcionarioId: funcionario?.id ?? null,
+        });
+      }
     }
 
     await tx.venda.delete({ where: { id } });

@@ -76,7 +76,11 @@ export const MENU: GrupoMenu[] = [
     id: "caixa",
     rotulo: "Caixa",
     icone: Wallet,
-    itens: [{ rotulo: "Caixa atual" }, { rotulo: "Abertura e fechamento" }, { rotulo: "Caixa detalhado" }],
+    itens: [
+      { rotulo: "Caixa atual", href: "/caixa" },
+      { rotulo: "Caixa detalhado", href: "/caixa/detalhado" },
+      { rotulo: "Histórico de caixas", href: "/caixa/historico" },
+    ],
   },
   {
     id: "financeiro",

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { consultarCobranca } from "@/lib/mercadopago";
+import { registrarNoCaixa } from "@/lib/caixa";
 import { StatusPagamento } from "@/generated/prisma/enums";
 
 function mapStatus(mpStatus: string): StatusPagamento {
@@ -33,7 +34,23 @@ export async function GET(
   const statusPagamento = mapStatus(order.status);
 
   if (statusPagamento !== venda.statusPagamento) {
-    await prisma.venda.update({ where: { id: venda.id }, data: { statusPagamento } });
+    await prisma.$transaction(async (tx) => {
+      await tx.venda.update({ where: { id: venda.id }, data: { statusPagamento } });
+      // cartão aprovado: agora sim entra no caixa (uma vez só)
+      if (statusPagamento === StatusPagamento.PAGO) {
+        const ja = await tx.movimentoCaixa.findFirst({ where: { vendaId: venda.id, tipo: "VENDA" } });
+        if (!ja) {
+          await registrarNoCaixa(tx, {
+            tipo: "VENDA",
+            formaPagamento: venda.formaPagamento,
+            valor: venda.valorVendido,
+            descricao: `Venda nº ${venda.id} — ${venda.descricao}`,
+            vendaId: venda.id,
+            funcionarioId: venda.funcionarioId,
+          });
+        }
+      }
+    });
   }
 
   return Response.json({ statusPagamento, detalhe: order.status_detail });

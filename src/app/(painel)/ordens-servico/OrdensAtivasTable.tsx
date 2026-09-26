@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Printer, Search } from "lucide-react";
+import { Fragment, useState } from "react";
+import { HandCoins, PackageCheck, Printer, Search } from "lucide-react";
+import { ReceberOS } from "./ReceberOS";
 import { formatCurrency, formatDate, formatTelefone } from "@/lib/format";
 import { STATUS_OS_LABELS, STATUS_OS_TOM, TIPO_SERVICO_LABELS } from "./labels";
 import { StatusSelect } from "./StatusSelect";
@@ -25,6 +26,7 @@ type OrdemServico = {
 
 export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; hoje: Date }) {
   const [busca, setBusca] = useState("");
+  const [recebendo, setRecebendo] = useState<{ id: number; entregar: boolean } | null>(null);
 
   const termo = busca.trim().toLowerCase();
   const termoDigits = termo.replace(/\D/g, "");
@@ -78,8 +80,11 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
             )}
             {filtradas.map((os) => {
               const atrasada = os.prazoPrometido < hoje;
+              const restante = Math.round((os.valorTotal - os.sinalPago) * 100) / 100;
+              const pronta = os.status === "PRONTO_PARA_AVISAR" || os.status === "CLIENTE_AVISADO";
               return (
-                <tr key={os.id} className={atrasada ? "[&>td:first-child]:shadow-[inset_3px_0_0_var(--perigo)]" : undefined}>
+                <Fragment key={os.id}>
+                <tr className={atrasada ? "[&>td:first-child]:shadow-[inset_3px_0_0_var(--perigo)]" : undefined}>
                   <td className="destaque numero">#{os.id}</td>
                   <td>
                     <div className="font-semibold text-texto">{os.clienteNome}</div>
@@ -93,13 +98,41 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
                   <td>
                     <div className="flex flex-col items-start gap-1.5">
                       <Etiqueta tom={STATUS_OS_TOM[os.status]}>{STATUS_OS_LABELS[os.status]}</Etiqueta>
-                      <StatusSelect id={os.id} status={os.status} />
+                      <StatusSelect
+                        id={os.id}
+                        status={os.status}
+                        restante={restante}
+                        aoPedirRecebimento={() => setRecebendo({ id: os.id, entregar: true })}
+                      />
                     </div>
                   </td>
                   <td className="direita numero">{formatCurrency(os.valorTotal)}</td>
                   <td className="direita numero destaque">{formatCurrency(os.valorTotal - os.sinalPago)}</td>
                   <td>
                     <div className="flex items-center justify-end gap-1">
+                      {restante > 0.009 ? (
+                        <button
+                          type="button"
+                          onClick={() => setRecebendo(recebendo?.id === os.id ? null : { id: os.id, entregar: pronta })}
+                          title="Registrar pagamento (entra no caixa)"
+                          className="inline-flex items-center gap-1 rounded-lg border border-borda-forte bg-ouro/10 px-2 py-1 text-xs font-semibold text-ouro transition hover:bg-ouro/20"
+                        >
+                          <HandCoins className="h-3.5 w-3.5" aria-hidden />
+                          Receber
+                        </button>
+                      ) : (
+                        pronta && (
+                          <button
+                            type="button"
+                            onClick={() => setRecebendo({ id: os.id, entregar: true })}
+                            title="Marcar como entregue"
+                            className="inline-flex items-center gap-1 rounded-lg border border-sucesso/35 bg-sucesso-fundo px-2 py-1 text-xs font-semibold text-sucesso transition hover:border-sucesso/70"
+                          >
+                            <PackageCheck className="h-3.5 w-3.5" aria-hidden />
+                            Entregar
+                          </button>
+                        )
+                      )}
                       <AvisarClienteButton
                         id={os.id}
                         clienteNome={os.clienteNome}
@@ -120,6 +153,14 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
                     </div>
                   </td>
                 </tr>
+                {recebendo?.id === os.id && (
+                  <tr>
+                    <td colSpan={8} className="bg-superficie-2/60">
+                      <ReceberOS osId={os.id} restante={restante} entregarPadrao={recebendo.entregar} aoFechar={() => setRecebendo(null)} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               );
             })}
           </tbody>

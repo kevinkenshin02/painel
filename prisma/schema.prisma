@@ -283,6 +283,8 @@ model OrdemServico {
   criadoEm         DateTime    @default(now())
   atualizadoEm     DateTime    @updatedAt
 
+  pagamentos PagamentoOS[]
+
   @@map("ordens_servico")
 }
 
@@ -353,6 +355,84 @@ model Venda {
 }
 
 // ---------------------------------------------------------------------------
+// Caixa (abertura com troco, entradas por forma de pagamento, sangria, fechamento)
+// ---------------------------------------------------------------------------
+
+enum StatusCaixa {
+  ABERTO
+  FECHADO
+}
+
+enum TipoMovimentoCaixa {
+  ABERTURA
+  VENDA
+  RECEBIMENTO_OS
+  REFORCO
+  SANGRIA
+  DESPESA
+  ESTORNO
+}
+
+model Caixa {
+  id                   Int              @id @default(autoincrement())
+  status               StatusCaixa      @default(ABERTO)
+  abertoEm             DateTime         @default(now())
+  fechadoEm            DateTime?
+  trocoInicial         Float            @default(0)
+  abertoPorId          Int?
+  abertoPor            Funcionario?     @relation("CaixaAbertura", fields: [abertoPorId], references: [id], onDelete: SetNull)
+  fechadoPorId         Int?
+  fechadoPor           Funcionario?     @relation("CaixaFechamento", fields: [fechadoPorId], references: [id], onDelete: SetNull)
+  /// aberto sozinho por uma venda/recebimento com o caixa fechado
+  aberturaAutomatica   Boolean          @default(false)
+  /// fechamento: quanto a pessoa contou de dinheiro na gaveta
+  dinheiroContado      Float?
+  /// fechamento: quanto o Painel esperava de dinheiro na gaveta (guardado para o histórico)
+  dinheiroEsperado     Float?
+  observacaoAbertura   String?
+  observacaoFechamento String?
+
+  movimentos MovimentoCaixa[]
+
+  @@map("caixas")
+}
+
+model MovimentoCaixa {
+  id             Int                @id @default(autoincrement())
+  caixaId        Int
+  caixa          Caixa              @relation(fields: [caixaId], references: [id], onDelete: Cascade)
+  tipo           TipoMovimentoCaixa
+  formaPagamento FormaPagamento
+  /// positivo entra, negativo sai
+  valor          Float
+  descricao      String
+  vendaId        Int?
+  ordemServicoId Int?
+  funcionarioId  Int?
+  funcionario    Funcionario?       @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm       DateTime           @default(now())
+
+  @@index([caixaId])
+  @@map("movimentos_caixa")
+}
+
+/// Cada valor recebido de uma OS (sinal, parte, restante na entrega).
+model PagamentoOS {
+  id             Int            @id @default(autoincrement())
+  ordemServicoId Int
+  ordemServico   OrdemServico   @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  valor          Float
+  formaPagamento FormaPagamento
+  descricao      String?
+  funcionarioId  Int?
+  funcionario    Funcionario?   @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm       DateTime       @default(now())
+
+  @@index([ordemServicoId])
+  @@map("pagamentos_os")
+}
+
+// ---------------------------------------------------------------------------
 // Despesas fixas
 // ---------------------------------------------------------------------------
 
@@ -398,10 +478,14 @@ model Funcionario {
   isAdmin  Boolean  @default(false)
   criadoEm DateTime @default(now())
 
-  vendas     Venda[]
-  movimentos MovimentoEstoque[]
-  precos     HistoricoPreco[]
-  notas      NotaEntrada[]
+  vendas           Venda[]
+  movimentos       MovimentoEstoque[]
+  precos           HistoricoPreco[]
+  notas            NotaEntrada[]
+  caixasAbertos    Caixa[]            @relation("CaixaAbertura")
+  caixasFechados   Caixa[]            @relation("CaixaFechamento")
+  movimentosCaixa  MovimentoCaixa[]
+  pagamentosOS     PagamentoOS[]
 
   @@map("funcionarios")
 }

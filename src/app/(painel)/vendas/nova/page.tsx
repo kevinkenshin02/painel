@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarCheck, History, ShoppingCart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { hojeCalendario, hojeInput } from "@/lib/datas";
@@ -18,7 +19,7 @@ export default async function NovaVendaPage(props: PageProps<"/vendas/nova">) {
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [vendasHoje, produtos, cliente] = await Promise.all([
+  const [vendasHoje, produtos, cliente, caixa] = await Promise.all([
     prisma.venda.findMany({
       where: { dataVenda: hojeCalendario() },
       orderBy: { id: "desc" },
@@ -32,6 +33,7 @@ export default async function NovaVendaPage(props: PageProps<"/vendas/nova">) {
     busca.cliente
       ? prisma.cliente.findUnique({ where: { id: Number(busca.cliente) || -1 }, select: { id: true, nome: true, telefone: true } })
       : Promise.resolve(null),
+    prisma.caixa.findFirst({ where: { status: "ABERTO" }, select: { id: true } }),
   ]);
 
   // funcionário não vê custo
@@ -50,6 +52,16 @@ export default async function NovaVendaPage(props: PageProps<"/vendas/nova">) {
           </BotaoLink>
         }
       />
+
+      {!caixa && (
+        <Aviso tom="aviso">
+          O caixa está fechado.{" "}
+          <Link href="/caixa" className="font-bold underline">
+            Abrir o caixa com o troco
+          </Link>{" "}
+          — se registrar uma venda paga assim mesmo, o Painel abre um caixa sozinho, sem troco.
+        </Aviso>
+      )}
 
       {modoTeste && (
         <Aviso tom="aviso">

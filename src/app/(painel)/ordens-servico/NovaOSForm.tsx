@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { TIPO_SERVICO_LABELS } from "./labels";
+import { FORMA_PAGAMENTO_LABELS } from "../vendas/labels";
 import { PhoneInput } from "@/components/PhoneInput";
 import { BuscaCliente, type ClienteResumo } from "@/components/BuscaCliente";
 import { Botao } from "@/components/ui/Botao";
@@ -115,7 +116,7 @@ export function NovaOSForm({
       </Secao>
 
       <Secao titulo="Valores">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Campo rotulo="Valor total (R$)">
             <input
               type="number"
@@ -137,6 +138,15 @@ export function NovaOSForm({
               onChange={(e) => setSinal(Number(e.target.value) || 0)}
               className={cx(classeCampo, "numero")}
             />
+          </Campo>
+          <Campo rotulo="Forma do sinal" dica={sinal > 0 ? "Entra no caixa agora." : undefined}>
+            <select name="formaSinal" defaultValue="DINHEIRO" disabled={sinal <= 0} className={classeCampo}>
+              {Object.entries(FORMA_PAGAMENTO_LABELS).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
           </Campo>
           <div className="flex flex-col justify-end">
             <div className="rounded-xl border border-borda-forte bg-ouro/10 px-4 py-2.5">
