@@ -11,37 +11,173 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Estoque
+// Cadastros: clientes, receitas e fornecedores (Painel 2.0)
 // ---------------------------------------------------------------------------
 
-model ArmacaoEstoque {
-  id             Int      @id @default(autoincrement())
-  codigo         String   @unique
-  marcaModelo    String
-  corReferencia  String
-  fornecedor     String
-  dataEntrada    DateTime
-  quantidade     Int
-  custoUnitario  Float
-  precoVenda     Float
-  ativo          Boolean  @default(true)
-  criadoEm       DateTime @default(now())
-  atualizadoEm   DateTime @updatedAt
+model Cliente {
+  id           Int          @id @default(autoincrement())
+  nome         String
+  /// só os números, ex.: 11960776721
+  telefone     String       @default("")
+  cpf          String?
+  email        String?
+  nascimento   DateTime?
+  endereco     String?
+  origem       CanalOrigem?
+  observacoes  String?
+  ativo        Boolean      @default(true)
+  criadoEm     DateTime     @default(now())
+  atualizadoEm DateTime     @updatedAt
 
-  vendas Venda[]
+  receitas Receita[]
+  ordens   OrdemServico[]
+  vendas   Venda[]
 
-  @@map("estoque_armacoes")
+  @@index([telefone])
+  @@map("clientes")
 }
 
-enum MarcaRelogio {
-  ORIENT
-  MAGNUM
-  LINCE
-  X_WATCH
-  COSMOS
-  CHAMPION
-  SKMEI
+/// Receita de óculos com os mesmos campos do formulário "Orçamento de óculos" do site.
+model Receita {
+  id           Int       @id @default(autoincrement())
+  clienteId    Int
+  cliente      Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  dataReceita  DateTime?
+  medico       String?
+  tipoLente    String?
+  odEsferico   String?
+  odCilindrico String?
+  odEixo       String?
+  odAdicao     String?
+  odPrisma     String?
+  odBase       String?
+  oeEsferico   String?
+  oeCilindrico String?
+  oeEixo       String?
+  oeAdicao     String?
+  oePrisma     String?
+  oeBase       String?
+  /// distância pupilar (D.P.)
+  dp           String?
+  observacoes  String?
+  criadoEm     DateTime  @default(now())
+
+  @@map("receitas")
+}
+
+model Fornecedor {
+  id            Int       @id @default(autoincrement())
+  nome          String
+  razaoSocial   String?
+  /// só os números
+  cnpj          String?   @unique
+  telefone      String?
+  email         String?
+  representante String?
+  observacoes   String?
+  ativo         Boolean   @default(true)
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  produtos Produto[]
+
+  @@map("fornecedores")
+}
+
+// ---------------------------------------------------------------------------
+// Produtos e estoque (relógios, armações, lentes... numa ficha só)
+// ---------------------------------------------------------------------------
+
+enum TipoProduto {
+  RELOGIO
+  ARMACAO
+  OCULOS_SOL
+  LENTE_PRONTA
+  LENTE_CONTATO
+  PULSEIRA
+  BATERIA
+  ACESSORIO
   OUTRO
+}
+
+model Produto {
+  id            Int               @id @default(autoincrement())
+  /// código interno da loja (o que vai na etiqueta)
+  codigo        String            @unique
+  codigoBarras  String?
+  /// referência do fabricante / código do produto na nota do fornecedor
+  referencia    String?
+  tipo          TipoProduto
+  marca         String?
+  descricao     String
+  cor           String?
+  publico       PublicoRelogio?
+  mecanismo     MecanismoRelogio?
+  grau          String?
+  ncm           String?
+  unidade       String            @default("UN")
+  localizacao   String?
+  fornecedorId  Int?
+  fornecedor    Fornecedor?       @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  quantidade    Int               @default(0)
+  estoqueMinimo Int               @default(0)
+  custoUnitario Float             @default(0)
+  precoVenda    Float             @default(0)
+  ativo         Boolean           @default(true)
+  observacoes   String?
+  criadoEm      DateTime          @default(now())
+  atualizadoEm  DateTime          @updatedAt
+
+  vendas     Venda[]
+  movimentos MovimentoEstoque[]
+  precos     HistoricoPreco[]
+
+  @@index([tipo, marca])
+  @@map("produtos")
+}
+
+enum TipoMovimento {
+  CADASTRO
+  ENTRADA
+  SAIDA_VENDA
+  ESTORNO_VENDA
+  AJUSTE
+  CONFERENCIA
+}
+
+/// Cada entrada/saída de estoque fica registrada (quem, quando, por quê e o saldo depois).
+model MovimentoEstoque {
+  id            Int           @id @default(autoincrement())
+  produtoId     Int
+  produto       Produto       @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  tipo          TipoMovimento
+  /// positivo entra, negativo sai
+  quantidade    Int
+  saldo         Int
+  custoUnitario Float?
+  motivo        String?
+  vendaId       Int?
+  funcionarioId Int?
+  funcionario   Funcionario?  @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm      DateTime      @default(now())
+
+  @@index([produtoId, criadoEm])
+  @@map("movimentos_estoque")
+}
+
+model HistoricoPreco {
+  id            Int          @id @default(autoincrement())
+  produtoId     Int
+  produto       Produto      @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  custoUnitario Float
+  precoVenda    Float
+  origem        String?
+  funcionarioId Int?
+  funcionario   Funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: SetNull)
+  criadoEm      DateTime     @default(now())
+
+  @@index([produtoId, criadoEm])
+  @@map("historico_precos")
 }
 
 enum PublicoRelogio {
@@ -57,47 +193,6 @@ enum MecanismoRelogio {
   DIGITAL
   SMART
   OUTRO
-}
-
-model RelogioEstoque {
-  id               Int              @id @default(autoincrement())
-  codigo           String           @unique
-  marca            MarcaRelogio
-  marcaOutro       String?
-  modeloReferencia String
-  tipoPublico      PublicoRelogio
-  tipoMecanismo    MecanismoRelogio
-  fornecedor       String
-  dataEntrada      DateTime
-  quantidade       Int
-  custoUnitario    Float
-  precoVenda       Float
-  ativo            Boolean          @default(true)
-  criadoEm         DateTime         @default(now())
-  atualizadoEm     DateTime         @updatedAt
-
-  vendas Venda[]
-
-  @@map("estoque_relogios")
-}
-
-model LenteEstoque {
-  id             Int      @id @default(autoincrement())
-  codigo         String   @unique
-  descricao      String
-  grau           String
-  fornecedor     String
-  dataEntrada    DateTime
-  quantidade     Int
-  custoUnitario  Float
-  precoVenda     Float
-  ativo          Boolean  @default(true)
-  criadoEm       DateTime @default(now())
-  atualizadoEm   DateTime @updatedAt
-
-  vendas Venda[]
-
-  @@map("estoque_lentes")
 }
 
 // ---------------------------------------------------------------------------
@@ -125,8 +220,11 @@ enum StatusOS {
 model OrdemServico {
   id               Int         @id @default(autoincrement())
   dataEntrada      DateTime
+  /// nome e telefone ficam copiados na OS (comprovante e consulta online) mesmo com o cadastro do cliente
   clienteNome      String
   clienteWhatsapp  String
+  clienteId        Int?
+  cliente          Cliente?    @relation(fields: [clienteId], references: [id], onDelete: SetNull)
   tipoServico      TipoServico
   descricao        String
   prazoPrometido   DateTime
@@ -195,14 +293,11 @@ model Venda {
   mercadoPagoOrderId String?      @unique
   criadoEm        DateTime        @default(now())
 
-  armacaoId Int?
-  armacao   ArmacaoEstoque? @relation(fields: [armacaoId], references: [id])
+  produtoId Int?
+  produto   Produto? @relation(fields: [produtoId], references: [id], onDelete: SetNull)
 
-  relogioId Int?
-  relogio   RelogioEstoque? @relation(fields: [relogioId], references: [id])
-
-  lenteId Int?
-  lente   LenteEstoque? @relation(fields: [lenteId], references: [id])
+  clienteId Int?
+  cliente   Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
 
   funcionarioId Int?
   funcionario   Funcionario? @relation(fields: [funcionarioId], references: [id])
@@ -256,7 +351,9 @@ model Funcionario {
   isAdmin  Boolean  @default(false)
   criadoEm DateTime @default(now())
 
-  vendas Venda[]
+  vendas     Venda[]
+  movimentos MovimentoEstoque[]
+  precos     HistoricoPreco[]
 
   @@map("funcionarios")
 }

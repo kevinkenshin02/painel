@@ -13,12 +13,13 @@ import {
   Target,
   TrendingUp,
   TriangleAlert,
+  Users,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusOS, StatusPagamento } from "@/generated/prisma/enums";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { hojeCalendario, mesAtualCalendario } from "@/lib/datas";
-import { semEstoque } from "@/lib/estoque";
+import { precisaAtencao } from "@/lib/produtos";
 import { getFuncionarioLogado } from "@/lib/currentUser";
 import { Cabecalho } from "@/components/ui/Cabecalho";
 import { BotaoLink } from "@/components/ui/Botao";
@@ -37,7 +38,7 @@ export default async function VisaoGeral() {
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [vendasMes, emAndamento, atrasadas, prontas, entreguesMes, proximas, config, armacoes, relogios, lentes, despesasFixas] =
+  const [vendasMes, emAndamento, atrasadas, prontas, clientesAtivos, proximas, config, produtos, despesasFixas, clientesNovos] =
     await Promise.all([
       prisma.venda.findMany({
         where: { statusPagamento: StatusPagamento.PAGO, dataVenda: { gte: mes.inicio, lt: mes.fim } },
@@ -46,17 +47,16 @@ export default async function VisaoGeral() {
       prisma.ordemServico.count({ where: { status: { not: StatusOS.ENTREGUE } } }),
       prisma.ordemServico.count({ where: { status: { not: StatusOS.ENTREGUE }, prazoPrometido: { lt: hoje } } }),
       prisma.ordemServico.count({ where: { status: StatusOS.PRONTO_PARA_AVISAR } }),
-      prisma.ordemServico.count({ where: { status: StatusOS.ENTREGUE, dataEntrega: { gte: mes.inicio } } }),
+      prisma.cliente.count({ where: { ativo: true } }),
       prisma.ordemServico.findMany({
         where: { status: { not: StatusOS.ENTREGUE } },
         orderBy: { prazoPrometido: "asc" },
         take: 6,
       }),
       prisma.configuracao.findUnique({ where: { id: 1 } }),
-      prisma.armacaoEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
-      prisma.relogioEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
-      prisma.lenteEstoque.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true } }),
+      prisma.produto.findMany({ where: { ativo: true }, select: { quantidade: true, ativo: true, estoqueMinimo: true } }),
       isAdmin ? prisma.despesaFixa.findMany({ where: { ativo: true }, select: { valor: true } }) : Promise.resolve([]),
+      prisma.cliente.count({ where: { criadoEm: { gte: mes.inicio } } }),
     ]);
 
   // ----- vendas do mês -----
@@ -82,9 +82,8 @@ export default async function VisaoGeral() {
     .sort((a, b) => b.valor - a.valor);
 
   // ----- estoque -----
-  const itens = [...armacoes, ...relogios, ...lentes];
-  const pecas = itens.reduce((s, i) => s + i.quantidade, 0);
-  const zerados = itens.filter(semEstoque).length;
+  const pecas = produtos.reduce((s, i) => s + i.quantidade, 0);
+  const atencao = produtos.filter(precisaAtencao).length;
 
   const metas = [
     { rotulo: "Meta do dia", atual: totalHoje, meta: config?.metaDiaria ?? 0 },
@@ -167,27 +166,27 @@ export default async function VisaoGeral() {
         />
         <CartaoKpi
           tom="sakura"
-          icone={CircleCheck}
-          valor={entreguesMes}
-          rotulo="Entregues no mês"
-          detalhe="Ordens de serviço entregues"
-          href="/ordens-servico/entregues"
+          icone={Users}
+          valor={clientesAtivos}
+          rotulo="Clientes cadastrados"
+          detalhe={`${clientesNovos} ${clientesNovos === 1 ? "novo" : "novos"} este mês`}
+          href="/clientes"
         />
         <CartaoKpi
           tom="ouro"
           icone={Package}
           valor={pecas}
           rotulo="Peças em estoque"
-          detalhe={`${itens.length} ${itens.length === 1 ? "item ativo" : "itens ativos"}`}
+          detalhe={`${produtos.length} ${produtos.length === 1 ? "produto ativo" : "produtos ativos"}`}
           href="/estoque"
         />
         <CartaoKpi
           tom="vinho"
           icone={PackageSearch}
-          valor={zerados}
-          rotulo="Sem estoque"
-          detalhe="Itens ativos com 0 peças"
-          href="/estoque"
+          valor={atencao}
+          rotulo="Estoque para repor"
+          detalhe="Zerados ou abaixo do mínimo"
+          href="/produtos?situacao=atencao"
         />
       </div>
 

@@ -1,330 +1,235 @@
+import Link from "next/link";
+import { Boxes, History, Package, PackageSearch, TriangleAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
-import { hojeInput } from "@/lib/datas";
-import { semEstoque } from "@/lib/estoque";
-import { Cabecalho } from "@/components/ui/Cabecalho";
-import { Chip } from "@/components/ui/Etiqueta";
-import {
-  criarArmacao,
-  criarRelogio,
-  criarLente,
-  alternarAtivoArmacao,
-  alternarAtivoRelogio,
-  alternarAtivoLente,
-  excluirArmacao,
-  excluirRelogio,
-  excluirLente,
-} from "./actions";
-import { MARCA_RELOGIO_LABELS, PUBLICO_RELOGIO_LABELS, MECANISMO_RELOGIO_LABELS } from "./labels";
-import { EstoqueTabs } from "./EstoqueTabs";
-import { ArmacoesTable } from "./ArmacoesTable";
-import { RelogiosTable } from "./RelogiosTable";
-import { LentesTable } from "./LentesTable";
-import { AutoResetForm } from "@/components/AutoResetForm";
 import { getFuncionarioLogado } from "@/lib/currentUser";
+import { nomeProduto, precisaAtencao, TIPO_MOVIMENTO_LABELS, TIPO_PRODUTO_LABELS } from "@/lib/produtos";
+import type { TipoProduto } from "@/generated/prisma/enums";
+import { Cabecalho } from "@/components/ui/Cabecalho";
+import { BotaoLink } from "@/components/ui/Botao";
+import { Cartao, TituloCartao, Vazio } from "@/components/ui/Cartao";
+import { Chip, Etiqueta } from "@/components/ui/Etiqueta";
+import { cx } from "@/components/ui/cx";
 
 export const dynamic = "force-dynamic";
 
-const inputClass =
-  "w-full rounded-xl border border-borda bg-superficie-2 px-3.5 py-2.5 text-sm text-texto focus:border-ouro focus:ring-2 focus:ring-ouro/25 focus:outline-none";
+const dataHora = (d: Date) =>
+  new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }).format(d);
 
-export default async function EstoquePage(props: PageProps<"/estoque">) {
-  const { aba } = await props.searchParams;
+export default async function EstoquePage() {
   const logado = await getFuncionarioLogado();
   const isAdmin = logado?.isAdmin ?? false;
 
-  const [armacoes, relogios, lentes] = await Promise.all([
-    prisma.armacaoEstoque.findMany({ orderBy: { criadoEm: "desc" } }),
-    prisma.relogioEstoque.findMany({ orderBy: { criadoEm: "desc" } }),
-    prisma.lenteEstoque.findMany({ orderBy: { criadoEm: "desc" } }),
+  const [produtos, movimentos] = await Promise.all([
+    prisma.produto.findMany({ where: { ativo: true }, orderBy: [{ tipo: "asc" }, { marca: "asc" }] }),
+    prisma.movimentoEstoque.findMany({
+      orderBy: { criadoEm: "desc" },
+      take: 15,
+      include: { produto: { select: { id: true, codigo: true, marca: true, descricao: true } }, funcionario: { select: { nome: true } } },
+    }),
   ]);
 
-  const armacoesSection = (
-    <div className="flex flex-col gap-5">
-      {isAdmin && (
-        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
-            + Nova Armação
-          </summary>
-          <AutoResetForm
-            action={criarArmacao}
-            className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
-              <input type="text" name="codigo" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca/Modelo</span>
-              <input type="text" name="marcaModelo" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Cor/Referência</span>
-              <input type="text" name="corReferencia" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
-              <input type="text" name="fornecedor" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
-              <input
-                type="date"
-                name="dataEntrada"
-                required
-                defaultValue={hojeInput()}
-                className={inputClass}
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
-              <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
-              <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
-              <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <div className="sm:col-span-2 lg:col-span-3">
-              <button
-                type="submit"
-                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
-              >
-                Cadastrar armação
-              </button>
-            </div>
-          </AutoResetForm>
-        </details>
-      )}
-
-      <ArmacoesTable
-        armacoes={armacoes}
-        alternarAtivo={alternarAtivoArmacao}
-        excluir={excluirArmacao}
-        isAdmin={isAdmin}
-      />
-    </div>
-  );
-
-  const relogiosSection = (
-    <div className="flex flex-col gap-5">
-      {isAdmin && (
-        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
-            + Novo Relógio
-          </summary>
-          <AutoResetForm
-            action={criarRelogio}
-            className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
-              <input type="text" name="codigo" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca</span>
-              <select name="marca" required defaultValue="ORIENT" className={inputClass}>
-                {Object.entries(MARCA_RELOGIO_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Marca (se &quot;Outro&quot;)</span>
-              <input type="text" name="marcaOutro" className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Modelo/Referência</span>
-              <input type="text" name="modeloReferencia" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Público</span>
-              <select name="tipoPublico" required defaultValue="UNISSEX" className={inputClass}>
-                {Object.entries(PUBLICO_RELOGIO_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Mecanismo</span>
-              <select name="tipoMecanismo" required defaultValue="ANALOGICO" className={inputClass}>
-                {Object.entries(MECANISMO_RELOGIO_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
-              <input type="text" name="fornecedor" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
-              <input
-                type="date"
-                name="dataEntrada"
-                required
-                defaultValue={hojeInput()}
-                className={inputClass}
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
-              <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
-              <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
-              <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <div className="sm:col-span-2 lg:col-span-3">
-              <button
-                type="submit"
-                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
-              >
-                Cadastrar relógio
-              </button>
-            </div>
-          </AutoResetForm>
-        </details>
-      )}
-
-      <RelogiosTable
-        relogios={relogios}
-        alternarAtivo={alternarAtivoRelogio}
-        excluir={excluirRelogio}
-        isAdmin={isAdmin}
-      />
-    </div>
-  );
-
-  const lentesSection = (
-    <div className="flex flex-col gap-5">
-      {isAdmin && (
-        <details className="filete rounded-2xl border border-borda bg-superficie shadow-cartao open:pb-6">
-          <summary className="cursor-pointer px-6 py-4 text-sm font-bold text-ouro select-none">
-            + Nova Lente Pronta
-          </summary>
-          <AutoResetForm
-            action={criarLente}
-            className="grid grid-cols-1 gap-4 px-6 pt-2 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Código</span>
-              <input type="text" name="codigo" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Descrição</span>
-              <input
-                type="text"
-                name="descricao"
-                required
-                placeholder="Lente comum AR, Multifocal Kodak..."
-                className={inputClass}
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Grau</span>
-              <input
-                type="text"
-                name="grau"
-                required
-                placeholder="+2.00, sem grau..."
-                className={inputClass}
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Fornecedor</span>
-              <input type="text" name="fornecedor" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Data de entrada</span>
-              <input
-                type="date"
-                name="dataEntrada"
-                required
-                defaultValue={hojeInput()}
-                className={inputClass}
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Quantidade</span>
-              <input type="number" name="quantidade" required min={0} defaultValue={1} className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Custo unitário (R$)</span>
-              <input type="number" name="custoUnitario" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="text-[11px] font-bold tracking-[0.08em] text-suave uppercase">Preço de venda (R$)</span>
-              <input type="number" name="precoVenda" required min={0} step="0.01" className={inputClass} />
-            </label>
-            <div className="sm:col-span-2 lg:col-span-3">
-              <button
-                type="submit"
-                className="degrade-sol rounded-xl px-5 py-2.5 text-sm font-bold text-sobre-sol"
-              >
-                Cadastrar lente
-              </button>
-            </div>
-          </AutoResetForm>
-        </details>
-      )}
-
-      <LentesTable
-        lentes={lentes}
-        alternarAtivo={alternarAtivoLente}
-        excluir={excluirLente}
-        isAdmin={isAdmin}
-      />
-    </div>
-  );
-
-  const ativos = [...armacoes, ...relogios, ...lentes].filter((i) => i.ativo);
-  const pecas = ativos.reduce((s, i) => s + i.quantidade, 0);
-  const valorVenda = ativos.reduce((s, i) => s + i.quantidade * i.precoVenda, 0);
-  const valorCusto = ativos.reduce((s, i) => s + i.quantidade * i.custoUnitario, 0);
-  const zerados = ativos.filter(semEstoque).length;
+  const grupos = new Map<string, { tipo: TipoProduto; marca: string; produtos: number; pecas: number; custo: number; venda: number }>();
+  for (const p of produtos) {
+    const chave = `${p.tipo}|${p.marca ?? ""}`;
+    const g = grupos.get(chave) ?? { tipo: p.tipo, marca: p.marca ?? "Sem marca", produtos: 0, pecas: 0, custo: 0, venda: 0 };
+    g.produtos += 1;
+    g.pecas += p.quantidade;
+    g.custo += p.quantidade * p.custoUnitario;
+    g.venda += p.quantidade * p.precoVenda;
+    grupos.set(chave, g);
+  }
+  const linhas = [...grupos.values()].sort((a, b) => b.venda - a.venda);
+  const atencao = produtos.filter(precisaAtencao).sort((a, b) => a.quantidade - b.quantidade);
+  const totPecas = linhas.reduce((s, g) => s + g.pecas, 0);
+  const totCusto = linhas.reduce((s, g) => s + g.custo, 0);
+  const totVenda = linhas.reduce((s, g) => s + g.venda, 0);
 
   return (
     <>
       <Cabecalho
         secao="Estoque"
         titulo="Posição do estoque"
-        descricao="Relógios, armações e lentes prontas disponíveis para venda. Vender pelo Painel já tira do estoque."
+        descricao="Quanto tem na loja, por tipo e marca. Vender pelo Painel já tira do estoque; cada entrada e ajuste fica registrado."
+        acoes={
+          <BotaoLink href="/produtos" icone={Package}>
+            Lista de produtos
+          </BotaoLink>
+        }
       >
-        <Chip>{pecas} peças em {ativos.length} itens ativos</Chip>
         <Chip>
-          Valor de venda: <span className="numero text-texto">{formatCurrency(valorVenda)}</span>
+          {totPecas} peças em {produtos.length} produtos ativos
+        </Chip>
+        <Chip>
+          A preço de venda: <span className="numero text-texto">{formatCurrency(totVenda)}</span>
         </Chip>
         {isAdmin && (
           <Chip>
-            Valor de custo: <span className="numero text-texto">{formatCurrency(valorCusto)}</span>
+            A custo: <span className="numero text-texto">{formatCurrency(totCusto)}</span>
           </Chip>
         )}
-        <Chip className={zerados > 0 ? "border-perigo/40 text-perigo" : undefined}>
-          {zerados} {zerados === 1 ? "item ativo zerado" : "itens ativos zerados"}
+        <Chip className={atencao.length > 0 ? "border-perigo/40 text-perigo" : undefined}>
+          {atencao.length} zerados ou abaixo do mínimo
         </Chip>
       </Cabecalho>
 
-      <EstoqueTabs
-        inicial={aba === "armacoes" || aba === "lentes" ? aba : "relogios"}
-        contagem={{ armacoes: armacoes.length, relogios: relogios.length, lentes: lentes.length }}
-        armacoes={armacoesSection}
-        relogios={relogiosSection}
-        lentes={lentesSection}
-      />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
+        <Cartao filete className="overflow-hidden xl:col-span-3">
+          <div className="p-6 pb-5">
+            <TituloCartao selo="Resumo" icone={Boxes} titulo="Por tipo e marca" descricao="Ordenado pelo valor em estoque." />
+          </div>
+          <div className="overflow-x-auto border-t border-borda">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Marca</th>
+                  <th className="direita">Produtos</th>
+                  <th className="direita">Peças</th>
+                  {isAdmin && <th className="direita">A custo</th>}
+                  <th className="direita">A preço de venda</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linhas.map((g) => (
+                  <tr key={`${g.tipo}|${g.marca}`}>
+                    <td>{TIPO_PRODUTO_LABELS[g.tipo]}</td>
+                    <td className="destaque">
+                      <Link
+                        href={`/produtos?tipo=${g.tipo}${g.marca !== "Sem marca" ? `&marca=${encodeURIComponent(g.marca)}` : ""}`}
+                        className="hover:text-ouro hover:underline"
+                      >
+                        {g.marca}
+                      </Link>
+                    </td>
+                    <td className="direita numero">{g.produtos}</td>
+                    <td className="direita numero">{g.pecas}</td>
+                    {isAdmin && <td className="direita numero">{formatCurrency(g.custo)}</td>}
+                    <td className="direita numero destaque">{formatCurrency(g.venda)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={2}>Totais</td>
+                  <td className="direita numero">{produtos.length}</td>
+                  <td className="direita numero">{totPecas}</td>
+                  {isAdmin && <td className="direita numero">{formatCurrency(totCusto)}</td>}
+                  <td className="direita numero">{formatCurrency(totVenda)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </Cartao>
+
+        <Cartao filete className="overflow-hidden xl:col-span-2">
+          <div className="p-6 pb-5">
+            <TituloCartao selo="Atenção" icone={TriangleAlert} titulo="Zerados ou abaixo do mínimo">
+              {atencao.length > 0 && (
+                <BotaoLink href="/produtos?situacao=atencao" tamanho="sm">
+                  Ver todos
+                </BotaoLink>
+              )}
+            </TituloCartao>
+          </div>
+          {atencao.length === 0 ? (
+            <div className="px-6 pb-6">
+              <Vazio>Nenhum produto zerado.</Vazio>
+            </div>
+          ) : (
+            <div className="max-h-[420px] overflow-y-auto border-t border-borda">
+              <table className="tabela">
+                <tbody>
+                  {atencao.slice(0, 40).map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <Link href={`/produtos/${p.id}?aba=estoque`} className="text-texto hover:text-ouro hover:underline">
+                          {nomeProduto(p)}
+                        </Link>
+                        <div className="numero text-xs text-suave">{p.codigo}</div>
+                      </td>
+                      <td className="direita">
+                        {p.quantidade <= 0 ? (
+                          <Etiqueta tom="perigo">Zerado</Etiqueta>
+                        ) : (
+                          <Etiqueta tom="aviso">
+                            {p.quantidade} / mín. {p.estoqueMinimo}
+                          </Etiqueta>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Cartao>
+      </div>
+
+      <Cartao filete className="overflow-hidden">
+        <div className="p-6 pb-5">
+          <TituloCartao
+            selo="Movimentações"
+            icone={History}
+            titulo="Últimas entradas e saídas"
+            descricao="Vendas, entradas, ajustes e cadastros de todos os produtos."
+          />
+        </div>
+        {movimentos.length === 0 ? (
+          <div className="px-6 pb-6">
+            <Vazio>Nenhuma movimentação ainda.</Vazio>
+          </div>
+        ) : (
+          <div className="overflow-x-auto border-t border-borda">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>Quando</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th>Motivo</th>
+                  <th>Quem</th>
+                  <th className="direita">Qtd.</th>
+                  <th className="direita">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {movimentos.map((m) => (
+                  <tr key={m.id}>
+                    <td className="numero whitespace-nowrap">{dataHora(m.criadoEm)}</td>
+                    <td>
+                      <Link href={`/produtos/${m.produto.id}?aba=estoque`} className="text-texto hover:text-ouro hover:underline">
+                        {nomeProduto(m.produto)}
+                      </Link>
+                    </td>
+                    <td>{TIPO_MOVIMENTO_LABELS[m.tipo]}</td>
+                    <td className="max-w-xs truncate">{m.motivo ?? "—"}</td>
+                    <td>{m.funcionario?.nome ?? "—"}</td>
+                    <td
+                      className={cx(
+                        "direita numero font-semibold",
+                        m.quantidade > 0 ? "text-sucesso" : m.quantidade < 0 ? "text-perigo" : ""
+                      )}
+                    >
+                      {m.quantidade > 0 ? `+${m.quantidade}` : m.quantidade}
+                    </td>
+                    <td className="direita numero destaque">{m.saldo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Cartao>
+
+      {produtos.length === 0 && (
+        <Cartao className="p-6">
+          <Vazio>
+            <PackageSearch className="mx-auto mb-2 h-6 w-6" aria-hidden />
+            Nenhum produto ativo. Cadastre em Cadastros → Produtos.
+          </Vazio>
+        </Cartao>
+      )}
     </>
   );
 }

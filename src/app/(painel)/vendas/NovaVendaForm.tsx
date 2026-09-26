@@ -3,41 +3,35 @@
 import { useRef, useState } from "react";
 import { Banknote, ChevronDown, CircleEllipsis, CreditCard, QrCode } from "lucide-react";
 import { CANAL_ORIGEM_LABELS, CATEGORIA_VENDA_LABELS } from "./labels";
-import { MARCA_RELOGIO_LABELS } from "../estoque/labels";
-import type { FormaPagamento, MarcaRelogio } from "@/generated/prisma/enums";
+import { nomeProduto, TIPO_PRODUTO_LABELS } from "@/lib/produtos";
+import type { CategoriaVenda, FormaPagamento, TipoProduto } from "@/generated/prisma/enums";
+import { BuscaCliente, type ClienteResumo } from "@/components/BuscaCliente";
 import { Botao } from "@/components/ui/Botao";
 import { Campo, classeCampo } from "@/components/ui/Campo";
 import { Aviso } from "@/components/ui/Aviso";
 import { cx } from "@/components/ui/cx";
 
-type ArmacaoOpcao = {
+export type ProdutoOpcao = {
   id: number;
   codigo: string;
-  marcaModelo: string;
-  quantidade: number;
-  custoUnitario: number;
-  precoVenda: number;
-};
-
-type RelogioOpcao = {
-  id: number;
-  codigo: string;
-  marca: MarcaRelogio;
-  marcaOutro: string | null;
-  modeloReferencia: string;
-  quantidade: number;
-  custoUnitario: number;
-  precoVenda: number;
-};
-
-type LenteOpcao = {
-  id: number;
-  codigo: string;
+  tipo: TipoProduto;
+  marca: string | null;
   descricao: string;
-  grau: string;
   quantidade: number;
   custoUnitario: number;
   precoVenda: number;
+};
+
+const CATEGORIA_DO_TIPO: Record<TipoProduto, CategoriaVenda> = {
+  RELOGIO: "RELOGIO",
+  ARMACAO: "SO_ARMACAO",
+  OCULOS_SOL: "OUTRO",
+  LENTE_PRONTA: "SO_LENTE",
+  LENTE_CONTATO: "SO_LENTE",
+  PULSEIRA: "ACESSORIO",
+  BATERIA: "BATERIA",
+  ACESSORIO: "ACESSORIO",
+  OUTRO: "OUTRO",
 };
 
 const FORMAS: { valor: FormaPagamento; rotulo: string; Icone: typeof Banknote }[] = [
@@ -47,59 +41,39 @@ const FORMAS: { valor: FormaPagamento; rotulo: string; Icone: typeof Banknote }[
   { valor: "OUTRO", rotulo: "Outro", Icone: CircleEllipsis },
 ];
 
+const descricaoDe = (p: ProdutoOpcao) => `${nomeProduto(p)} (${p.codigo})`;
+
 export function NovaVendaForm({
   action,
   hoje,
-  armacoes,
-  relogios,
-  lentes,
+  produtos,
   isAdmin,
+  produtoInicial,
+  clienteInicial,
 }: {
   action: (formData: FormData) => Promise<{ erro?: string; ok?: boolean }>;
   hoje: string;
-  armacoes: ArmacaoOpcao[];
-  relogios: RelogioOpcao[];
-  lentes: LenteOpcao[];
+  produtos: ProdutoOpcao[];
   isAdmin: boolean;
+  produtoInicial?: ProdutoOpcao | null;
+  clienteInicial?: ClienteResumo | null;
 }) {
   const [formKey, setFormKey] = useState(0);
   const [resultado, setResultado] = useState<{ erro?: string; ok?: boolean } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [produto, setProduto] = useState<ProdutoOpcao | null>(produtoInicial ?? null);
   const descricaoRef = useRef<HTMLInputElement>(null);
   const custoTotalRef = useRef<HTMLInputElement>(null);
   const valorVendidoRef = useRef<HTMLInputElement>(null);
   const quantidadeRef = useRef<HTMLInputElement>(null);
   const categoriaRef = useRef<HTMLSelectElement>(null);
 
-  function handleItemChange(value: string) {
-    if (!value) return;
-    const [tipo, idStr] = value.split(":");
-    const id = Number(idStr);
-    const qtd = Number(quantidadeRef.current?.value) || 1;
-
-    if (tipo === "A") {
-      const item = armacoes.find((a) => a.id === id);
-      if (!item) return;
-      if (descricaoRef.current) descricaoRef.current.value = `${item.marcaModelo} (${item.codigo})`;
-      if (custoTotalRef.current) custoTotalRef.current.value = String(item.custoUnitario * qtd);
-      if (valorVendidoRef.current) valorVendidoRef.current.value = String(item.precoVenda * qtd);
-      if (categoriaRef.current) categoriaRef.current.value = "SO_ARMACAO";
-    } else if (tipo === "R") {
-      const item = relogios.find((r) => r.id === id);
-      if (!item) return;
-      const nomeMarca = item.marca === "OUTRO" && item.marcaOutro ? item.marcaOutro : MARCA_RELOGIO_LABELS[item.marca];
-      if (descricaoRef.current) descricaoRef.current.value = `${nomeMarca} ${item.modeloReferencia} (${item.codigo})`;
-      if (custoTotalRef.current) custoTotalRef.current.value = String(item.custoUnitario * qtd);
-      if (valorVendidoRef.current) valorVendidoRef.current.value = String(item.precoVenda * qtd);
-      if (categoriaRef.current) categoriaRef.current.value = "RELOGIO";
-    } else if (tipo === "L") {
-      const item = lentes.find((l) => l.id === id);
-      if (!item) return;
-      if (descricaoRef.current) descricaoRef.current.value = `${item.descricao} (${item.grau}) (${item.codigo})`;
-      if (custoTotalRef.current) custoTotalRef.current.value = String(item.custoUnitario * qtd);
-      if (valorVendidoRef.current) valorVendidoRef.current.value = String(item.precoVenda * qtd);
-      if (categoriaRef.current) categoriaRef.current.value = "SO_LENTE";
-    }
+  function preencher(p: ProdutoOpcao | null, qtd = Number(quantidadeRef.current?.value) || 1) {
+    if (!p) return;
+    if (descricaoRef.current) descricaoRef.current.value = descricaoDe(p);
+    if (custoTotalRef.current) custoTotalRef.current.value = String(+(p.custoUnitario * qtd).toFixed(2));
+    if (valorVendidoRef.current) valorVendidoRef.current.value = String(+(p.precoVenda * qtd).toFixed(2));
+    if (categoriaRef.current) categoriaRef.current.value = CATEGORIA_DO_TIPO[p.tipo];
   }
 
   async function handleAction(formData: FormData) {
@@ -108,60 +82,67 @@ export function NovaVendaForm({
     try {
       const r = await action(formData);
       setResultado(r);
-      if (r.ok) setFormKey((k) => k + 1);
+      if (r.ok) {
+        setProduto(null);
+        setFormKey((k) => k + 1);
+      }
     } finally {
       setEnviando(false);
     }
   }
 
+  const grupos = Object.entries(
+    produtos.reduce<Record<string, ProdutoOpcao[]>>((acc, p) => {
+      (acc[p.tipo] ??= []).push(p);
+      return acc;
+    }, {})
+  );
+  const inicial = formKey === 0 ? produtoInicial : null;
+
   return (
     <form key={formKey} action={handleAction} className="flex flex-col gap-6">
-      <Campo rotulo="Produto do estoque (opcional)" dica="Escolher um item preenche a descrição e os valores sozinho.">
-        <select
-          name="itemEstoque"
-          defaultValue=""
-          onChange={(event) => handleItemChange(event.target.value)}
-          className={classeCampo}
-          autoFocus
-        >
-          <option value="">Nenhum — descrição livre</option>
-          {relogios.length > 0 && (
-            <optgroup label="Relógios">
-              {relogios.map((r) => (
-                <option key={`R:${r.id}`} value={`R:${r.id}`}>
-                  {r.codigo} — {r.marca === "OUTRO" && r.marcaOutro ? r.marcaOutro : MARCA_RELOGIO_LABELS[r.marca]}{" "}
-                  {r.modeloReferencia} (estoque: {r.quantidade})
-                </option>
-              ))}
-            </optgroup>
-          )}
-          {armacoes.length > 0 && (
-            <optgroup label="Armações">
-              {armacoes.map((a) => (
-                <option key={`A:${a.id}`} value={`A:${a.id}`}>
-                  {a.codigo} — {a.marcaModelo} (estoque: {a.quantidade})
-                </option>
-              ))}
-            </optgroup>
-          )}
-          {lentes.length > 0 && (
-            <optgroup label="Lentes prontas">
-              {lentes.map((l) => (
-                <option key={`L:${l.id}`} value={`L:${l.id}`}>
-                  {l.codigo} — {l.descricao} ({l.grau}) (estoque: {l.quantidade})
-                </option>
-              ))}
-            </optgroup>
-          )}
-        </select>
-      </Campo>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Campo rotulo="Produto do estoque (opcional)" dica="Escolher um produto preenche a descrição e os valores e tira do estoque.">
+          <select
+            name="produtoId"
+            defaultValue={inicial?.id ?? ""}
+            onChange={(event) => {
+              const p = produtos.find((x) => x.id === Number(event.target.value)) ?? null;
+              setProduto(p);
+              preencher(p);
+            }}
+            className={classeCampo}
+            autoFocus={!inicial}
+          >
+            <option value="">Nenhum — descrição livre (serviço, conserto...)</option>
+            {grupos.map(([tipo, lista]) => (
+              <optgroup key={tipo} label={TIPO_PRODUTO_LABELS[tipo as TipoProduto]}>
+                {lista.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.codigo} — {nomeProduto(p)} (estoque: {p.quantidade})
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </Campo>
+        <Campo rotulo="Cliente (opcional)" dica="Busque no cadastro para a compra entrar no histórico do cliente.">
+          <BuscaCliente inicial={clienteInicial} />
+        </Campo>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Campo rotulo="Descrição" className="sm:col-span-2">
-          <input ref={descricaoRef} type="text" name="descricao" required className={classeCampo} />
+          <input ref={descricaoRef} type="text" name="descricao" required defaultValue={inicial ? descricaoDe(inicial) : ""} className={classeCampo} />
         </Campo>
         <Campo rotulo="Categoria">
-          <select ref={categoriaRef} name="categoria" required defaultValue="OCULOS_COMPLETO" className={classeCampo}>
+          <select
+            ref={categoriaRef}
+            name="categoria"
+            required
+            defaultValue={inicial ? CATEGORIA_DO_TIPO[inicial.tipo] : "OCULOS_COMPLETO"}
+            className={classeCampo}
+          >
             {Object.entries(CATEGORIA_VENDA_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
@@ -175,8 +156,9 @@ export function NovaVendaForm({
             type="number"
             name="valorVendido"
             required
-            min={0}
+            min={0.01}
             step="0.01"
+            defaultValue={inicial ? inicial.precoVenda : ""}
             className={cx(classeCampo, "numero text-base font-semibold")}
           />
         </Campo>
@@ -200,21 +182,26 @@ export function NovaVendaForm({
 
       <details className="group rounded-xl border border-borda bg-superficie-2/60">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[13px] font-semibold text-texto-2 select-none">
-          Mais detalhes: cliente, data, quantidade, canal de origem{isAdmin ? " e custo" : ""}
+          Mais detalhes: data, quantidade, canal de origem{isAdmin ? " e custo" : ""}
           <ChevronDown className="h-4 w-4 text-suave transition group-open:rotate-180" aria-hidden />
         </summary>
-        <div className="grid grid-cols-1 gap-4 border-t border-borda px-4 py-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 border-t border-borda px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
           <Campo rotulo="Data da venda">
             <input type="date" name="dataVenda" required defaultValue={hoje} className={classeCampo} />
           </Campo>
-          <Campo rotulo="Cliente (opcional)">
-            <input type="text" name="clienteNome" className={classeCampo} />
-          </Campo>
           <Campo rotulo="Quantidade">
-            <input ref={quantidadeRef} type="number" name="quantidade" min={1} defaultValue={1} className={classeCampo} />
+            <input
+              ref={quantidadeRef}
+              type="number"
+              name="quantidade"
+              min={1}
+              defaultValue={1}
+              onChange={(e) => preencher(produto, Number(e.target.value) || 1)}
+              className={classeCampo}
+            />
           </Campo>
           <Campo rotulo="Canal de origem">
-            <select name="canalOrigem" required defaultValue="GOOGLE_MAPS" className={classeCampo}>
+            <select name="canalOrigem" required defaultValue="PASSOU_EM_FRENTE" className={classeCampo}>
               {Object.entries(CANAL_ORIGEM_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
@@ -223,15 +210,24 @@ export function NovaVendaForm({
             </select>
           </Campo>
           {isAdmin && (
-            <Campo rotulo="Custo total (R$)">
-              <input ref={custoTotalRef} type="number" name="custoTotal" min={0} step="0.01" defaultValue={0} className={classeCampo} />
+            <Campo rotulo="Custo total (R$)" dica="Vazio = custo da ficha do produto.">
+              <input
+                ref={custoTotalRef}
+                type="number"
+                name="custoTotal"
+                min={0}
+                step="0.01"
+                defaultValue={inicial ? inicial.custoUnitario : ""}
+                className={classeCampo}
+              />
             </Campo>
           )}
         </div>
       </details>
 
-      {!isAdmin && <input ref={custoTotalRef} type="hidden" name="custoTotal" defaultValue={0} />}
-
+      {produto && produto.quantidade <= 0 && (
+        <Aviso tom="aviso">Esse produto está zerado no sistema. Confira o estoque antes de vender.</Aviso>
+      )}
       {resultado?.erro && <Aviso tom="perigo">{resultado.erro}</Aviso>}
       {resultado?.ok && <Aviso tom="sucesso">Venda registrada. Ela já aparece em &quot;Vendas de hoje&quot; logo abaixo.</Aviso>}
 

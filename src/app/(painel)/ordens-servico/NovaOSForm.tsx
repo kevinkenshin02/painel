@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Printer } from "lucide-react";
 import { TIPO_SERVICO_LABELS } from "./labels";
 import { PhoneInput } from "@/components/PhoneInput";
+import { BuscaCliente, type ClienteResumo } from "@/components/BuscaCliente";
 import { Botao } from "@/components/ui/Botao";
 import { Campo, classeCampo } from "@/components/ui/Campo";
 import { Aviso } from "@/components/ui/Aviso";
@@ -28,15 +29,18 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 export function NovaOSForm({
   action,
   hoje,
+  clienteInicial,
 }: {
   action: (formData: FormData) => Promise<Resultado>;
   hoje: string;
+  clienteInicial?: ClienteResumo | null;
 }) {
   const [formKey, setFormKey] = useState(0);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [valorTotal, setValorTotal] = useState(0);
   const [sinal, setSinal] = useState(0);
+  const [cliente, setCliente] = useState<ClienteResumo | null>(clienteInicial ?? null);
 
   async function handleAction(formData: FormData) {
     setEnviando(true);
@@ -48,6 +52,7 @@ export function NovaOSForm({
         setFormKey((k) => k + 1);
         setValorTotal(0);
         setSinal(0);
+        setCliente(null);
       }
     } finally {
       setEnviando(false);
@@ -58,11 +63,21 @@ export function NovaOSForm({
     <form key={formKey} action={handleAction} className="flex flex-col gap-8">
       <Secao titulo="Cliente">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Campo rotulo="Nome do cliente">
-            <input type="text" name="clienteNome" required autoFocus className={classeCampo} />
+          <Campo rotulo="Cliente" dica={cliente ? undefined : "Busque no cadastro; se for cliente novo, é só digitar o nome — o cadastro é criado sozinho."}>
+            <BuscaCliente
+              inicial={formKey === 0 ? clienteInicial : null}
+              obrigatorio
+              aoEscolher={setCliente}
+            />
           </Campo>
           <Campo rotulo="Telefone / WhatsApp" dica="Usado no botão Avisar e na consulta online da OS.">
-            <PhoneInput name="clienteWhatsapp" required placeholder="(11) 91234-5678" />
+            <PhoneInput
+              key={cliente?.id ?? "novo"}
+              name="clienteWhatsapp"
+              required
+              defaultValue={cliente?.telefone ?? ""}
+              placeholder="(11) 91234-5678"
+            />
           </Campo>
         </div>
       </Secao>

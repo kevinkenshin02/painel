@@ -7,13 +7,25 @@ import {
   CategoriaVenda,
   FormaPagamento,
   StatusPagamento,
+  TipoMovimento,
 } from "@/generated/prisma/enums";
 import { criarCobrancaPoint, simularEventoCobranca } from "@/lib/mercadopago";
 import { getFuncionarioLogado } from "@/lib/currentUser";
+import { movimentarEstoque } from "@/lib/produtos";
+import { clienteDaOperacao } from "@/lib/clientes";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
+  if (value === null || String(value).trim() === "") return fallback;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function revalidarVendas() {
+  revalidatePath("/vendas", "layout");
+  revalidatePath("/estoque");
+  revalidatePath("/produtos", "layout");
+  revalidatePath("/clientes", "layout");
+  revalidatePath("/");
 }
 
 export async function criarVenda(formData: FormData): Promise<{ erro?: string; ok?: boolean }> {
@@ -27,114 +39,41 @@ export async function criarVenda(formData: FormData): Promise<{ erro?: string; o
 async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?: boolean }> {
   const dataVenda = formData.get("dataVenda") as string;
   const clienteNome = (formData.get("clienteNome") as string)?.trim() || null;
+  const clienteId = Number(formData.get("clienteId")) || null;
   const categoria = formData.get("categoria") as CategoriaVenda;
   const descricao = (formData.get("descricao") as string)?.trim();
-  const quantidade = parseNumber(formData.get("quantidade"), 1);
-  const custoTotal = parseNumber(formData.get("custoTotal"));
+  const quantidade = Math.max(1, Math.trunc(parseNumber(formData.get("quantidade"), 1)));
+  const custoInformado = (formData.get("custoTotal") as string | null)?.trim();
   const valorVendido = parseNumber(formData.get("valorVendido"));
   const canalOrigem = formData.get("canalOrigem") as CanalOrigem;
   const formaPagamento = formData.get("formaPagamento") as FormaPagamento;
-  const itemEstoque = (formData.get("itemEstoque") as string) || "";
+  const produtoId = Number(formData.get("produtoId")) || null;
 
   if (!dataVenda || !categoria || !descricao || !canalOrigem || !formaPagamento) {
     return { erro: "Preencha todos os campos obrigatórios." };
   }
+  if (!(valorVendido > 0)) return { erro: "Informe o valor vendido." };
 
-  const [tipoItem, idItemRaw] = itemEstoque.split(":");
-  const idItem = Number(idItemRaw);
   const statusPagamento =
-    formaPagamento === FormaPagamento.CARTAO_MAQUININHA
-      ? StatusPagamento.PENDENTE
-      : StatusPagamento.PAGO;
+    formaPagamento === FormaPagamento.CARTAO_MAQUININHA ? StatusPagamento.PENDENTE : StatusPagamento.PAGO;
   const funcionario = await getFuncionarioLogado();
   const funcionarioId = funcionario?.id ?? null;
 
   const venda = await prisma.$transaction(async (tx) => {
-    if (tipoItem === "A" && idItem) {
-      const armacao = await tx.armacaoEstoque.findUnique({ where: { id: idItem } });
-      if (!armacao || armacao.quantidade < quantidade) {
-        throw new Error("Estoque insuficiente para essa armação.");
-      }
-      await tx.armacaoEstoque.update({
-        where: { id: idItem },
-        data: { quantidade: armacao.quantidade - quantidade },
-      });
-      return tx.venda.create({
-        data: {
-          dataVenda: new Date(dataVenda),
-          clienteNome,
-          categoria,
-          descricao,
-          quantidade,
-          custoTotal,
-          valorVendido,
-          canalOrigem,
-          formaPagamento,
-          statusPagamento,
-          armacaoId: idItem,
-          funcionarioId,
-        },
-      });
-    }
+    const produto = produtoId ? await tx.produto.findUnique({ where: { id: produtoId } }) : null;
+    if (produtoId && !produto) throw new Error("Produto não encontrado.");
 
-    if (tipoItem === "R" && idItem) {
-      const relogio = await tx.relogioEstoque.findUnique({ where: { id: idItem } });
-      if (!relogio || relogio.quantidade < quantidade) {
-        throw new Error("Estoque insuficiente para esse relógio.");
-      }
-      await tx.relogioEstoque.update({
-        where: { id: idItem },
-        data: { quantidade: relogio.quantidade - quantidade },
-      });
-      return tx.venda.create({
-        data: {
-          dataVenda: new Date(dataVenda),
-          clienteNome,
-          categoria,
-          descricao,
-          quantidade,
-          custoTotal,
-          valorVendido,
-          canalOrigem,
-          formaPagamento,
-          statusPagamento,
-          relogioId: idItem,
-          funcionarioId,
-        },
-      });
-    }
+    // custo: o que o administrador digitou; senão, o custo da ficha do produto
+    const custoTotal =
+      funcionario?.isAdmin && custoInformado ? parseNumber(custoInformado) : produto ? produto.custoUnitario * quantidade : 0;
 
-    if (tipoItem === "L" && idItem) {
-      const lente = await tx.lenteEstoque.findUnique({ where: { id: idItem } });
-      if (!lente || lente.quantidade < quantidade) {
-        throw new Error("Estoque insuficiente para essa lente.");
-      }
-      await tx.lenteEstoque.update({
-        where: { id: idItem },
-        data: { quantidade: lente.quantidade - quantidade },
-      });
-      return tx.venda.create({
-        data: {
-          dataVenda: new Date(dataVenda),
-          clienteNome,
-          categoria,
-          descricao,
-          quantidade,
-          custoTotal,
-          valorVendido,
-          canalOrigem,
-          formaPagamento,
-          statusPagamento,
-          lenteId: idItem,
-          funcionarioId,
-        },
-      });
-    }
+    const cliente = await clienteDaOperacao(tx, { clienteId, nome: clienteNome ?? "", criarSeNaoExistir: false });
 
-    return tx.venda.create({
+    const criada = await tx.venda.create({
       data: {
         dataVenda: new Date(dataVenda),
-        clienteNome,
+        clienteNome: cliente?.nome ?? clienteNome,
+        clienteId: cliente?.id ?? null,
         categoria,
         descricao,
         quantidade,
@@ -143,9 +82,22 @@ async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?:
         canalOrigem,
         formaPagamento,
         statusPagamento,
+        produtoId: produto?.id ?? null,
         funcionarioId,
       },
     });
+
+    if (produto) {
+      await movimentarEstoque(tx, {
+        produtoId: produto.id,
+        delta: -quantidade,
+        tipo: TipoMovimento.SAIDA_VENDA,
+        motivo: `Venda nº ${criada.id}${cliente ? ` — ${cliente.nome}` : clienteNome ? ` — ${clienteNome}` : ""}`,
+        vendaId: criada.id,
+        funcionarioId,
+      });
+    }
+    return criada;
   });
 
   if (formaPagamento === FormaPagamento.CARTAO_MAQUININHA) {
@@ -163,8 +115,7 @@ async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?:
         where: { id: venda.id },
         data: { statusPagamento: StatusPagamento.RECUSADO },
       });
-      revalidatePath("/vendas", "layout");
-      revalidatePath("/");
+      revalidarVendas();
       const motivo = err instanceof Error ? err.message : "erro desconhecido";
       return {
         erro: `A venda foi registrada, mas a cobrança não chegou na maquininha (${motivo}). Ela ficou como "Recusado" — exclua e registre de novo, ou use outra forma de pagamento.`,
@@ -172,45 +123,34 @@ async function registrarVenda(formData: FormData): Promise<{ erro?: string; ok?:
     }
   }
 
-  revalidatePath("/vendas", "layout");
-  revalidatePath("/estoque");
-  revalidatePath("/");
+  revalidarVendas();
   return { ok: true };
 }
 
 export async function excluirVenda(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!id) throw new Error("Venda inválida.");
+  const funcionario = await getFuncionarioLogado();
 
   await prisma.$transaction(async (tx) => {
     const venda = await tx.venda.findUnique({ where: { id } });
     if (!venda) throw new Error("Venda inválida.");
 
-    if (venda.armacaoId) {
-      await tx.armacaoEstoque.update({
-        where: { id: venda.armacaoId },
-        data: { quantidade: { increment: venda.quantidade } },
-      });
-    }
-    if (venda.relogioId) {
-      await tx.relogioEstoque.update({
-        where: { id: venda.relogioId },
-        data: { quantidade: { increment: venda.quantidade } },
-      });
-    }
-    if (venda.lenteId) {
-      await tx.lenteEstoque.update({
-        where: { id: venda.lenteId },
-        data: { quantidade: { increment: venda.quantidade } },
+    if (venda.produtoId) {
+      await movimentarEstoque(tx, {
+        produtoId: venda.produtoId,
+        delta: venda.quantidade,
+        tipo: TipoMovimento.ESTORNO_VENDA,
+        motivo: `Venda nº ${venda.id} excluída`,
+        vendaId: venda.id,
+        funcionarioId: funcionario?.id ?? null,
       });
     }
 
     await tx.venda.delete({ where: { id } });
   });
 
-  revalidatePath("/vendas", "layout");
-  revalidatePath("/estoque");
-  revalidatePath("/");
+  revalidarVendas();
 }
 
 export async function simularPagamentoTeste(formData: FormData) {

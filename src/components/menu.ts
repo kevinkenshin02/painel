@@ -35,9 +35,9 @@ export const MENU: GrupoMenu[] = [
     rotulo: "Cadastros",
     icone: Users,
     itens: [
-      { rotulo: "Clientes" },
-      { rotulo: "Fornecedores" },
-      { rotulo: "Produtos" },
+      { rotulo: "Clientes", href: "/clientes" },
+      { rotulo: "Fornecedores", href: "/fornecedores" },
+      { rotulo: "Produtos", href: "/produtos" },
       { rotulo: "Funcionários", href: "/configuracoes#funcionarios", admin: true },
     ],
   },
