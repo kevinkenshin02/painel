@@ -88,7 +88,7 @@ function createWindow() {
     height: 900,
     title: "Óticas Tanaka | Painel de gestão",
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "icon.ico"),
+    icon: path.join(__dirname, "icone-painel-v3.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
