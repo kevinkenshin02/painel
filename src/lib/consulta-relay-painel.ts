@@ -5,6 +5,7 @@ import { iniciarRelay } from "./consulta-relay";
 
 /**
  * Liga o Painel ao site da consulta online (só se CONSULTA_RELAY_URL e CONSULTA_RELAY_SECRET estiverem no .env).
+ * CONSULTA_RELAY_URL=https://tanakaotica.com.br/api/painel/os ; CONSULTA_RELAY_SECRET = a mesma PAINEL_SECRET do site.
  * Roda uma vez quando o servidor do Painel sobe (ver src/instrumentation.ts) e não trava a abertura do Painel.
  */
 export function iniciarRelayConsulta() {
