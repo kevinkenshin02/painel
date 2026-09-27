@@ -99,6 +99,10 @@ function createWindow() {
   mainWindow.loadURL(`http://localhost:${PORT}`);
 }
 
+// Sem isto, o Windows trata todo app Electron não empacotado como o mesmo programa (o "electron.exe"
+// genérico) e mostra o ícone padrão do átomo ao fixar na barra de tarefas, em vez do ícone da janela.
+app.setAppUserModelId("com.tanaka.painel");
+
 const temAFechadura = app.requestSingleInstanceLock();
 
 if (!temAFechadura) {
