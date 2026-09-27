@@ -9,7 +9,8 @@ import { iniciarRelay } from "./consulta-relay";
  * Roda uma vez quando o servidor do Painel sobe (ver src/instrumentation.ts) e não trava a abertura do Painel.
  */
 export function iniciarRelayConsulta() {
-  const url = process.env.CONSULTA_RELAY_URL;
+  // o .env antigo apontava para o serviço separado por WebSocket (wss://consulta.tanakaotica.com.br/painel): agora a consulta mora no site
+  const url = /^wss?:\/\//.test(process.env.CONSULTA_RELAY_URL ?? "") ? "https://tanakaotica.com.br/api/painel/os" : process.env.CONSULTA_RELAY_URL;
   const secret = process.env.CONSULTA_RELAY_SECRET;
   if (!url || !secret) return;
 
