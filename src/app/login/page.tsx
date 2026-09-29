@@ -1,7 +1,5 @@
 import Image from "next/image";
-import { DatabaseBackup, HardDrive, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { VERSAO_PAINEL } from "@/lib/versao";
 import { PerfilPicker } from "./PerfilPicker";
 import { PrimeiroFuncionarioForm } from "./PrimeiroFuncionarioForm";
 
@@ -61,21 +59,6 @@ export default async function LoginPage() {
 
           <div className="mt-7 flex flex-1 flex-col justify-center">
             {semFuncionarios ? <PrimeiroFuncionarioForm /> : <PerfilPicker funcionarios={funcionarios} />}
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 gap-2 border-t border-borda pt-5 text-xs text-suave sm:grid-cols-3">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-ouro" aria-hidden />
-              Versão {VERSAO_PAINEL}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <HardDrive className="h-3.5 w-3.5 text-ouro" aria-hidden />
-              Dados neste computador
-            </span>
-            <span className="flex items-center gap-1.5">
-              <DatabaseBackup className="h-3.5 w-3.5 text-ouro" aria-hidden />
-              Backup ao fechar
-            </span>
           </div>
         </section>
       </div>
