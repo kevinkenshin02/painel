@@ -2,6 +2,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { PerfilPicker } from "./PerfilPicker";
 import { PrimeiroFuncionarioForm } from "./PrimeiroFuncionarioForm";
+import { VidroLiquido } from "@/components/VidroLiquido";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +28,11 @@ export default async function LoginPage() {
       </div>
 
       <div className="relative flex min-h-full items-center justify-center px-4 py-8">
-        {/* um cartão só, em vidro ("bolha"), que aparece com um pop suave. Sempre escuro: o logo é branco. */}
-        <section
+        {/* um cartão só, em vidro líquido, que aparece com um pop suave. Sempre escuro: o logo é branco. */}
+        <VidroLiquido
           data-theme="dark"
-          className="bolha filete flex w-full max-w-[380px] flex-col rounded-[28px] px-6 py-7 text-texto transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] starting:scale-[0.94] starting:opacity-0 motion-reduce:transition-none sm:px-8 sm:py-8"
+          raio={28}
+          className="flex w-full max-w-[380px] flex-col px-6 py-7 text-texto transition-[opacity,scale] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] starting:scale-[0.94] starting:opacity-0 motion-reduce:transition-none sm:px-8 sm:py-8"
         >
         <div className="flex flex-col items-center text-center">
           <Image
@@ -61,7 +63,7 @@ export default async function LoginPage() {
           <div>{config?.endereco?.trim() || "Rua São Bento, 545 · Lojas 21 e 22 · Centro, São Paulo"}</div>
           <div className="mt-0.5 font-semibold text-ouro">tanakaotica.com.br</div>
         </div>
-        </section>
+        </VidroLiquido>
       </div>
     </div>
   );

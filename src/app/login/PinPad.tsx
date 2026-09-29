@@ -10,7 +10,7 @@ const PIN_MIN = 4;
 const PIN_MAX = 6;
 
 const classeTecla =
-  "bolha-botao flex h-12 w-16 items-center justify-center rounded-2xl text-lg font-bold text-texto transition-[transform,background-color,border-color] duration-150 ease-out active:scale-95 disabled:opacity-50";
+  "liquido-botao flex h-12 w-16 items-center justify-center rounded-[18px] text-lg font-bold text-texto disabled:opacity-50";
 
 export function PinPad({ funcionarioId }: { funcionarioId: number }) {
   const [pin, setPin] = useState("");
