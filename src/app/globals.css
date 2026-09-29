@@ -176,14 +176,21 @@ input[type="month"]::-webkit-calendar-picker-indicator {
   .liquido > * {
     position: relative;
   }
-  /* brilho de reflexo que acompanha o mouse/dedo */
+  /* brilho de reflexo pequeno que acompanha o mouse, só com o mouse em cima do cartão */
   .liquido::before {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: radial-gradient(420px circle at var(--luz-x, 22%) var(--luz-y, 0%), rgba(255, 255, 255, 0.13), transparent 60%);
+    background: radial-gradient(170px circle at var(--luz-x, 22%) var(--luz-y, 0%), rgba(255, 255, 255, 0.09), transparent 70%);
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  @media (hover: hover) {
+    .liquido:hover::before {
+      opacity: 1;
+    }
   }
   /* aro de luz na borda: forte em cima-esquerda, some nas laterais, volta fraco embaixo-direita */
   .liquido::after {
