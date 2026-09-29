@@ -20,15 +20,11 @@ export default async function LoginPage() {
     // self-start: o <body> é flex com altura fixa e esticaria esta caixa só até a altura da tela,
     // cortando em cima e embaixo o que não coubesse (no celular, o logo sumia e não dava para rolar)
     <div className="relative flex min-h-dvh w-full self-start items-center justify-center overflow-hidden px-4 py-8 sm:px-6 sm:py-10">
-      <Image
-        src="/marca/fundo-sakura.jpg"
-        alt=""
-        fill
-        priority
-        unoptimized
-        className="object-cover object-[35%_60%]"
-      />
-      <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.5)_0%,rgba(10,9,8,0.78)_100%)]" />
+      {/* fundo preso à tela (fixed): antes acompanhava a caixa e dava um "zoom" quando o cartão crescia para o PIN */}
+      <div aria-hidden className="fixed inset-0">
+        <Image src="/marca/fundo-sakura.jpg" alt="" fill priority unoptimized className="object-cover object-[35%_60%]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.5)_0%,rgba(10,9,8,0.78)_100%)]" />
+      </div>
 
       {/* um cartão só: marca em cima, entrada embaixo. Sempre escuro, porque o logo é branco. */}
       <section
