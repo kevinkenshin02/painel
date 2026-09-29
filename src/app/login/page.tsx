@@ -30,7 +30,7 @@ export default async function LoginPage() {
         {/* um cartão só, em vidro ("bolha"), que aparece com um pop suave. Sempre escuro: o logo é branco. */}
         <section
           data-theme="dark"
-          className="bolha filete flex w-full max-w-[380px] flex-col rounded-[28px] px-6 py-7 text-texto transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.34,1.3,0.64,1)] starting:scale-[0.94] starting:opacity-0 motion-reduce:transition-none sm:px-8 sm:py-8"
+          className="bolha filete flex w-full max-w-[380px] flex-col rounded-[28px] px-6 py-7 text-texto transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] starting:scale-[0.94] starting:opacity-0 motion-reduce:transition-none sm:px-8 sm:py-8"
         >
         <div className="flex flex-col items-center text-center">
           <Image
