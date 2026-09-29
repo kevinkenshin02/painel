@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
-import { ChevronRight, LogOut, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronRight, LogOut, Menu, Search, X } from "lucide-react";
 import { sair } from "@/app/login/actions";
 import { MENU, grupoAtivo, itemAtivo, type GrupoMenu } from "./menu";
 import { cx } from "./ui/cx";
@@ -22,6 +22,16 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
   const pathname = usePathname();
   const [busca, setBusca] = useState("");
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
+  const [gavetaAberta, setGavetaAberta] = useState(false);
+
+  useEffect(() => {
+    if (!gavetaAberta) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setGavetaAberta(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gavetaAberta]);
 
   const grupos = useMemo(() => {
     const termo = semAcento(busca.trim());
@@ -47,9 +57,56 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
   }
 
   return (
-    <aside className="nao-imprimir flex h-screen w-[272px] shrink-0 flex-col gap-4 border-r border-lat-borda bg-lat-fundo px-4 py-5 text-lat-texto">
+    <>
+      {/* celular/tablet: barra fina no topo; o menu vira gaveta que desliza por cima */}
+      <div className="nao-imprimir flex h-14 shrink-0 items-center gap-3 border-b border-lat-borda bg-lat-fundo px-3 text-lat-texto lg:hidden">
+        <button
+          type="button"
+          onClick={() => setGavetaAberta(true)}
+          aria-label="Abrir menu"
+          aria-controls="menu-painel"
+          aria-expanded={gavetaAberta}
+          className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-150 ease-out hover:bg-white/5 active:scale-95"
+        >
+          <Menu className="h-5 w-5" aria-hidden />
+        </button>
+        <Link href="/" className="block">
+          <Image src="/marca/logo-tanaka.png" alt="Tanaka Ótica e Relojoaria" width={760} height={155} unoptimized className="h-7 w-auto" />
+        </Link>
+      </div>
+
+      <div
+        onClick={() => setGavetaAberta(false)}
+        aria-hidden
+        className={cx(
+          "nao-imprimir fixed inset-0 z-30 bg-black/60 transition-opacity duration-200 ease-out motion-reduce:transition-none lg:hidden",
+          gavetaAberta ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
+      />
+
+    <aside
+      id="menu-painel"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a")) setGavetaAberta(false);
+      }}
+      className={cx(
+        "nao-imprimir fixed inset-y-0 left-0 z-40 flex h-dvh w-[272px] max-w-[85vw] shrink-0 flex-col gap-4 border-r border-lat-borda bg-lat-fundo px-4 py-5 text-lat-texto",
+        "transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
+        "lg:static lg:z-auto lg:max-w-none lg:translate-x-0",
+        gavetaAberta ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => setGavetaAberta(false)}
+        aria-label="Fechar menu"
+        className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-xl text-lat-suave transition hover:bg-white/5 hover:text-lat-texto lg:hidden"
+      >
+        <X className="h-5 w-5" aria-hidden />
+      </button>
+
       {/* logo solta no menu (sem quadro atrás), ocupando a largura toda */}
-      <Link href="/" className="-mx-1 block px-0 pt-2 pb-1 transition hover:opacity-90">
+      <Link href="/" className="-mx-1 block px-0 pt-10 pb-1 transition hover:opacity-90 lg:pt-2">
         <Image
           src="/marca/logo-tanaka.png"
           alt="Tanaka Ótica e Relojoaria"
@@ -193,5 +250,6 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
         </button>
       </div>
     </aside>
+    </>
   );
 }
