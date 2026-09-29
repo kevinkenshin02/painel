@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate, formatTelefone } from "@/lib/format";
 import { STATUS_OS_LABELS, TIPO_SERVICO_LABELS } from "../../(painel)/ordens-servico/labels";
 import { PrintButton } from "./PrintButton";
+import { ReceiptText } from "lucide-react";
+import { BotaoLink } from "@/components/ui/Botao";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +38,12 @@ export default async function ReciboPage({ params }: { params: Promise<{ id: str
     <div className="mx-auto flex min-h-full w-full max-w-xl flex-col gap-5 px-6 py-10 print:max-w-none print:p-0">
       <div className="flex items-center justify-between print:hidden">
         <h1 className="font-titulo text-xl font-bold text-texto">Comprovante da OS #{os.id}</h1>
-        <PrintButton />
+        <div className="flex flex-wrap items-center gap-2">
+          <BotaoLink href={`/recibo/${os.id}/cupom`} icone={ReceiptText}>
+            Impressora de cupom
+          </BotaoLink>
+          <PrintButton />
+        </div>
       </div>
 
       {/* papel: sempre claro, na tela e na impressão */}

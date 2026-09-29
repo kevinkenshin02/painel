@@ -140,11 +140,11 @@ export function OrdensAtivasTable({ ativas, hoje }: { ativas: OrdemServico[]; ho
                         tipoServicoLabel={TIPO_SERVICO_LABELS[os.tipoServico]}
                       />
                       <a
-                        href={`/recibo/${os.id}`}
+                        href={`/recibo/${os.id}/cupom`}
                         target="_blank"
                         rel="noopener"
-                        title="Imprimir comprovante"
-                        aria-label="Imprimir comprovante"
+                        title="Imprimir as 2 vias (cupom)"
+                        aria-label="Imprimir as 2 vias (cupom)"
                         className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-suave transition hover:bg-superficie-3 hover:text-texto"
                       >
                         <Printer className="h-3.5 w-3.5" aria-hidden />

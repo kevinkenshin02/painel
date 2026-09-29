@@ -164,9 +164,13 @@ export function NovaOSForm({
         <Aviso tom="sucesso">
           <span>
             OS <strong>#{resultado.id}</strong> criada.{" "}
-            <a href={`/recibo/${resultado.id}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 underline">
+            <a href={`/recibo/${resultado.id}/cupom`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 underline">
               <Printer className="h-3.5 w-3.5" aria-hidden />
-              Imprimir o comprovante
+              Imprimir as 2 vias (cupom)
+            </a>{" "}
+            ·{" "}
+            <a href={`/recibo/${resultado.id}`} target="_blank" rel="noopener" className="underline">
+              Folha comum
             </a>{" "}
             ·{" "}
             <Link href="/ordens-servico" className="underline">
