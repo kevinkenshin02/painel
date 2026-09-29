@@ -48,12 +48,15 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 
 export function ProdutoForm({
   produto,
+  modelo,
   fornecedores,
   marcas,
   podeEditar,
   codigoInicial,
 }: {
   produto?: ProdutoEdicao;
+  /** cadastro novo copiado de outro produto: preenche tudo menos os códigos, que são de cada peça */
+  modelo?: Omit<ProdutoEdicao, "id">;
   fornecedores: { id: number; nome: string }[];
   marcas: string[];
   podeEditar: boolean;
@@ -61,9 +64,10 @@ export function ProdutoForm({
   codigoInicial?: string;
 }) {
   const router = useRouter();
-  const [tipo, setTipo] = useState<TipoProduto>(produto?.tipo ?? "RELOGIO");
-  const [custo, setCusto] = useState(produto?.custoUnitario ?? 0);
-  const [preco, setPreco] = useState(produto?.precoVenda ?? 0);
+  const base = produto ?? modelo;
+  const [tipo, setTipo] = useState<TipoProduto>(base?.tipo ?? "RELOGIO");
+  const [custo, setCusto] = useState(base?.custoUnitario ?? 0);
+  const [preco, setPreco] = useState(base?.precoVenda ?? 0);
   const [resultado, setResultado] = useState<{ erro?: string; ok?: boolean } | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -113,7 +117,7 @@ export function ProdutoForm({
               <input name="referencia" defaultValue={produto?.referencia ?? ""} className={classeCampo} />
             </Campo>
             <Campo rotulo="Marca">
-              <input name="marca" list="marcas-produto" defaultValue={produto?.marca ?? ""} className={classeCampo} />
+              <input name="marca" list="marcas-produto" defaultValue={base?.marca ?? ""} className={classeCampo} />
               <datalist id="marcas-produto">
                 {marcas.map((m) => (
                   <option key={m} value={m} />
@@ -121,15 +125,15 @@ export function ProdutoForm({
               </datalist>
             </Campo>
             <Campo rotulo="Descrição / modelo" className="sm:col-span-2">
-              <input name="descricao" required defaultValue={produto?.descricao} placeholder="Ex.: Automático aço, mostrador azul" className={classeCampo} />
+              <input name="descricao" required defaultValue={base?.descricao} placeholder="Ex.: Automático aço, mostrador azul" className={classeCampo} />
             </Campo>
             <Campo rotulo="Cor">
-              <input name="cor" defaultValue={produto?.cor ?? ""} className={classeCampo} />
+              <input name="cor" defaultValue={base?.cor ?? ""} className={classeCampo} />
             </Campo>
             {tipo === "RELOGIO" && (
               <>
                 <Campo rotulo="Público">
-                  <select name="publico" defaultValue={produto?.publico ?? "UNISSEX"} className={classeCampo}>
+                  <select name="publico" defaultValue={base?.publico ?? "UNISSEX"} className={classeCampo}>
                     {Object.entries(PUBLICO_LABELS).map(([v, l]) => (
                       <option key={v} value={v}>
                         {l}
@@ -138,7 +142,7 @@ export function ProdutoForm({
                   </select>
                 </Campo>
                 <Campo rotulo="Mecanismo">
-                  <select name="mecanismo" defaultValue={produto?.mecanismo ?? "ANALOGICO"} className={classeCampo}>
+                  <select name="mecanismo" defaultValue={base?.mecanismo ?? "ANALOGICO"} className={classeCampo}>
                     {Object.entries(MECANISMO_LABELS).map(([v, l]) => (
                       <option key={v} value={v}>
                         {l}
@@ -150,24 +154,24 @@ export function ProdutoForm({
             )}
             {(tipo === "LENTE_PRONTA" || tipo === "LENTE_CONTATO") && (
               <Campo rotulo="Grau">
-                <input name="grau" defaultValue={produto?.grau ?? ""} placeholder="+2,00 / sem grau" className={classeCampo} />
+                <input name="grau" defaultValue={base?.grau ?? ""} placeholder="+2,00 / sem grau" className={classeCampo} />
               </Campo>
             )}
             <Campo rotulo="Local / prateleira">
-              <input name="localizacao" defaultValue={produto?.localizacao ?? ""} placeholder="Vitrine 1, gaveta B..." className={classeCampo} />
+              <input name="localizacao" defaultValue={base?.localizacao ?? ""} placeholder="Vitrine 1, gaveta B..." className={classeCampo} />
             </Campo>
             <Campo rotulo="Unidade">
-              <input name="unidade" defaultValue={produto?.unidade ?? "UN"} className={cx(classeCampo, "uppercase")} />
+              <input name="unidade" defaultValue={base?.unidade ?? "UN"} className={cx(classeCampo, "uppercase")} />
             </Campo>
             <Campo rotulo="NCM (fiscal)">
-              <input name="ncm" inputMode="numeric" defaultValue={produto?.ncm ?? ""} className={classeCampo} />
+              <input name="ncm" inputMode="numeric" defaultValue={base?.ncm ?? ""} className={classeCampo} />
             </Campo>
           </div>
         </Secao>
 
         <Secao titulo="Fornecedor">
           <Campo rotulo="Quem vende para a loja" className="max-w-md">
-            <select name="fornecedorId" defaultValue={produto?.fornecedorId ?? ""} className={classeCampo}>
+            <select name="fornecedorId" defaultValue={base?.fornecedorId ?? ""} className={classeCampo}>
               <option value="">Sem fornecedor</option>
               {fornecedores.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -186,7 +190,7 @@ export function ProdutoForm({
                 type="number"
                 min={0}
                 step="0.01"
-                defaultValue={produto?.custoUnitario ?? ""}
+                defaultValue={base?.custoUnitario ?? ""}
                 onChange={(e) => setCusto(Number(e.target.value) || 0)}
                 className={cx(classeCampo, "numero")}
               />
@@ -198,7 +202,7 @@ export function ProdutoForm({
                 min={0}
                 step="0.01"
                 required
-                defaultValue={produto?.precoVenda ?? ""}
+                defaultValue={base?.precoVenda ?? ""}
                 onChange={(e) => setPreco(Number(e.target.value) || 0)}
                 className={cx(classeCampo, "numero text-base font-semibold")}
               />
@@ -213,7 +217,7 @@ export function ProdutoForm({
               </div>
             </div>
             <Campo rotulo="Estoque mínimo" dica="Avisa quando ficar abaixo. 0 = só quando zerar.">
-              <input name="estoqueMinimo" type="number" min={0} defaultValue={produto?.estoqueMinimo ?? 0} className={cx(classeCampo, "numero")} />
+              <input name="estoqueMinimo" type="number" min={0} defaultValue={base?.estoqueMinimo ?? 0} className={cx(classeCampo, "numero")} />
             </Campo>
             {!produto && (
               <Campo rotulo="Quantidade inicial">
@@ -222,7 +226,7 @@ export function ProdutoForm({
             )}
           </div>
           <Campo rotulo="Observações">
-            <textarea name="observacoes" rows={2} defaultValue={produto?.observacoes ?? ""} className={classeCampo} />
+            <textarea name="observacoes" rows={2} defaultValue={base?.observacoes ?? ""} className={classeCampo} />
           </Campo>
         </Secao>
       </fieldset>

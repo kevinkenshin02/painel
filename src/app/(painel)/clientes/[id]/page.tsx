@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ClipboardList, Eye, History, MessageCircle, Plus, ShoppingCart, UserRound } from "lucide-react";
+import { ClipboardList, Eye, History, MessageCircle, Plus, ShoppingCart, UserPlus, UserRound } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusOS, StatusPagamento } from "@/generated/prisma/enums";
 import { formatCpf, formatCurrency, formatDate, formatTelefone } from "@/lib/format";
@@ -108,6 +108,9 @@ export default async function ClientePage(props: PageProps<"/clientes/[id]">) {
                 WhatsApp
               </a>
             )}
+            <BotaoLink href={`/clientes/novo?copiar=${cliente.id}`} icone={UserPlus} title="Cadastrar alguém da família com o mesmo telefone e endereço">
+              Mesma família
+            </BotaoLink>
             <BotaoLink href={`/vendas/nova?cliente=${cliente.id}`} icone={ShoppingCart}>
               Nova venda
             </BotaoLink>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BadgeDollarSign, Boxes, FileText, History, Package, ShoppingCart } from "lucide-react";
+import { BadgeDollarSign, Boxes, Copy, FileText, History, Package, ShoppingCart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { StatusPagamento } from "@/generated/prisma/enums";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
@@ -62,6 +62,11 @@ export default async function ProdutoPage(props: PageProps<"/produtos/[id]">) {
             <BotaoLink href="/produtos" icone={Package}>
               Produtos
             </BotaoLink>
+            {isAdmin && (
+              <BotaoLink href={`/produtos/novo?copiar=${p.id}`} icone={Copy} title="Cadastrar outra peça a partir desta ficha">
+                Duplicar
+              </BotaoLink>
+            )}
             {p.ativo && p.quantidade > 0 && (
               <BotaoLink href={`/vendas/nova?produto=${p.id}`} variante="primario" icone={ShoppingCart}>
                 Vender

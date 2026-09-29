@@ -23,7 +23,10 @@ export type ClienteEdicao = {
   observacoes: string | null;
 };
 
-export function ClienteForm({ cliente }: { cliente?: ClienteEdicao }) {
+/** Cadastro de alguém da mesma família: vem só o que costuma ser igual (telefone, endereço, origem). */
+export type ClienteFamilia = Pick<ClienteEdicao, "telefone" | "endereco" | "origem">;
+
+export function ClienteForm({ cliente, familia }: { cliente?: ClienteEdicao; familia?: ClienteFamilia }) {
   const router = useRouter();
   const [resultado, setResultado] = useState<{ erro?: string; ok?: boolean } | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -50,7 +53,7 @@ export function ClienteForm({ cliente }: { cliente?: ClienteEdicao }) {
           <input type="text" name="nome" required autoFocus={!cliente} defaultValue={cliente?.nome} className={classeCampo} />
         </Campo>
         <Campo rotulo="Telefone / WhatsApp">
-          <PhoneInput name="telefone" defaultValue={cliente?.telefone ?? ""} placeholder="(11) 91234-5678" />
+          <PhoneInput name="telefone" defaultValue={cliente?.telefone ?? familia?.telefone ?? ""} placeholder="(11) 91234-5678" />
         </Campo>
         <Campo rotulo="CPF (opcional)">
           <input
@@ -70,10 +73,10 @@ export function ClienteForm({ cliente }: { cliente?: ClienteEdicao }) {
           <input type="email" name="email" defaultValue={cliente?.email ?? ""} className={classeCampo} />
         </Campo>
         <Campo rotulo="Endereço" className="sm:col-span-2">
-          <input type="text" name="endereco" defaultValue={cliente?.endereco ?? ""} className={classeCampo} />
+          <input type="text" name="endereco" defaultValue={cliente?.endereco ?? familia?.endereco ?? ""} className={classeCampo} />
         </Campo>
         <Campo rotulo="Como conheceu a loja">
-          <select name="origem" defaultValue={cliente?.origem ?? ""} className={classeCampo}>
+          <select name="origem" defaultValue={cliente?.origem ?? familia?.origem ?? ""} className={classeCampo}>
             <option value="">—</option>
             {Object.entries(CANAL_ORIGEM_LABELS).map(([v, l]) => (
               <option key={v} value={v}>
