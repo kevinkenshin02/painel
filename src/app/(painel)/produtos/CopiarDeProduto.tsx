@@ -1,17 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Copy } from "lucide-react";
 import { TIPO_PRODUTO_LABELS } from "@/lib/produtos";
 import type { TipoProduto } from "@/generated/prisma/enums";
-import { classeCampo } from "@/components/ui/Campo";
-import { cx } from "@/components/ui/cx";
+import { Campo, classeCampo } from "@/components/ui/Campo";
 
 export type OpcaoCopia = { id: number; tipo: TipoProduto; rotulo: string };
 
-export function CopiarDeProduto({ opcoes, selecionado, codigo }: { opcoes: OpcaoCopia[]; selecionado?: number; codigo?: string }) {
+export function CopiarDeProduto({
+  opcoes,
+  tipo,
+  selecionado,
+  codigo,
+  className,
+}: {
+  opcoes: OpcaoCopia[];
+  tipo: TipoProduto;
+  selecionado?: number;
+  codigo?: string;
+  className?: string;
+}) {
   const router = useRouter();
-  const tipos = Object.keys(TIPO_PRODUTO_LABELS) as TipoProduto[];
+  const doTipo = opcoes.filter((o) => o.tipo === tipo);
+  const rotuloTipo = TIPO_PRODUTO_LABELS[tipo];
 
   function escolher(valor: string) {
     const q = new URLSearchParams();
@@ -22,27 +33,24 @@ export function CopiarDeProduto({ opcoes, selecionado, codigo }: { opcoes: Opcao
   }
 
   return (
-    <label className="flex flex-col gap-2 rounded-xl border border-borda bg-superficie-2/60 p-4 sm:flex-row sm:items-center sm:gap-4">
-      <span className="flex shrink-0 items-center gap-2 text-[13px] font-semibold text-texto">
-        <Copy className="h-4 w-4 text-ouro" aria-hidden />
-        Começar de um produto parecido
-      </span>
-      <select value={selecionado ?? ""} onChange={(e) => escolher(e.target.value)} className={cx(classeCampo, "sm:max-w-xl")}>
-        <option value="">Em branco (sem copiar)</option>
-        {tipos.map((t) => {
-          const doTipo = opcoes.filter((o) => o.tipo === t);
-          if (doTipo.length === 0) return null;
-          return (
-            <optgroup key={t} label={TIPO_PRODUTO_LABELS[t]}>
-              {doTipo.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.rotulo}
-                </option>
-              ))}
-            </optgroup>
-          );
-        })}
+    <Campo
+      rotulo="Começar de um produto parecido"
+      dica={doTipo.length ? `Só aparecem produtos do tipo ${rotuloTipo}.` : undefined}
+      className={className}
+    >
+      <select
+        value={doTipo.some((o) => o.id === selecionado) ? selecionado : ""}
+        onChange={(e) => escolher(e.target.value)}
+        disabled={doTipo.length === 0}
+        className={classeCampo}
+      >
+        <option value="">{doTipo.length ? "Em branco (sem copiar)" : `Nenhum produto do tipo ${rotuloTipo} cadastrado ainda`}</option>
+        {doTipo.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.rotulo}
+          </option>
+        ))}
       </select>
-    </label>
+    </Campo>
   );
 }

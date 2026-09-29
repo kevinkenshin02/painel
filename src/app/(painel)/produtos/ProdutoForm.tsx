@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { salvarProduto } from "./actions";
+import { CopiarDeProduto, type OpcaoCopia } from "./CopiarDeProduto";
 import { MECANISMO_LABELS, PUBLICO_LABELS, TIPO_PRODUTO_LABELS } from "@/lib/produtos";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import type { TipoProduto } from "@/generated/prisma/enums";
@@ -49,6 +50,8 @@ function Secao({ titulo, children }: { titulo: string; children: React.ReactNode
 export function ProdutoForm({
   produto,
   modelo,
+  modeloId,
+  opcoesCopia,
   fornecedores,
   marcas,
   podeEditar,
@@ -57,6 +60,9 @@ export function ProdutoForm({
   produto?: ProdutoEdicao;
   /** cadastro novo copiado de outro produto: preenche tudo menos os códigos, que são de cada peça */
   modelo?: Omit<ProdutoEdicao, "id">;
+  modeloId?: number;
+  /** produtos que dá para usar de ponto de partida num cadastro novo */
+  opcoesCopia?: OpcaoCopia[];
   fornecedores: { id: number; nome: string }[];
   marcas: string[];
   podeEditar: boolean;
@@ -102,6 +108,15 @@ export function ProdutoForm({
                 ))}
               </select>
             </Campo>
+            {!produto && opcoesCopia && (
+              <CopiarDeProduto
+                opcoes={opcoesCopia}
+                tipo={tipo}
+                selecionado={modeloId}
+                codigo={codigoInicial}
+                className="sm:col-span-1 lg:col-span-3"
+              />
+            )}
             <Campo rotulo="Código interno" dica="O que vai na etiqueta.">
               <input name="codigo" required defaultValue={produto?.codigo ?? codigoInicial} autoFocus={!produto} className={cx(classeCampo, "uppercase")} />
             </Campo>

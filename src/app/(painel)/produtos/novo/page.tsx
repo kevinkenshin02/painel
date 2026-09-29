@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { getFuncionarioLogado } from "@/lib/currentUser";
 import { MARCAS_SUGERIDAS, nomeProduto } from "@/lib/produtos";
 import { ProdutoForm } from "../ProdutoForm";
-import { CopiarDeProduto } from "../CopiarDeProduto";
 import { Cabecalho } from "@/components/ui/Cabecalho";
 import { BotaoLink } from "@/components/ui/Botao";
 import { Cartao, TituloCartao } from "@/components/ui/Cartao";
@@ -23,12 +22,16 @@ export default async function NovoProdutoPage(props: PageProps<"/produtos/novo">
     prisma.produto.findMany({ where: { marca: { not: null } }, distinct: ["marca"], select: { marca: true } }),
     prisma.produto.findMany({
       orderBy: [{ tipo: "asc" }, { marca: "asc" }, { descricao: "asc" }],
-      select: { id: true, tipo: true, codigo: true, marca: true, descricao: true, cor: true },
+      select: { id: true, tipo: true, codigo: true, referencia: true, marca: true, descricao: true, cor: true },
     }),
     copiarId ? prisma.produto.findUnique({ where: { id: copiarId } }) : null,
   ]);
   const marcas = [...new Set([...MARCAS_SUGERIDAS, ...marcasUsadas.map((m) => m.marca as string)])].sort((a, b) => a.localeCompare(b));
-  const opcoes = todos.map((p) => ({ id: p.id, tipo: p.tipo, rotulo: `${nomeProduto(p)}${p.cor ? ` · ${p.cor}` : ""} (${p.codigo})` }));
+  const opcoes = todos.map((p) => ({
+    id: p.id,
+    tipo: p.tipo,
+    rotulo: [nomeProduto(p), p.cor, p.referencia && `ref. ${p.referencia}`].filter(Boolean).join(" · ") + ` (${p.codigo})`,
+  }));
 
   return (
     <>
@@ -44,17 +47,16 @@ export default async function NovoProdutoPage(props: PageProps<"/produtos/novo">
       />
       <Cartao filete className="p-6">
         <TituloCartao selo="Ficha" icone={PackagePlus} titulo="Dados do produto" className="mb-6" />
-        <div className="mb-6 flex flex-col gap-3">
-          <CopiarDeProduto opcoes={opcoes} selecionado={modelo?.id} codigo={codigo} />
-          {modelo && (
-            <Aviso tom="info">
-              Copiado de <strong>{nomeProduto(modelo)}</strong> ({modelo.codigo}). Preencha o código desta peça e ajuste o que for diferente — a
-              ficha original não muda.
-            </Aviso>
-          )}
-        </div>
+        {modelo && (
+          <Aviso tom="info" className="mb-6">
+            Copiado de <strong>{nomeProduto(modelo)}</strong> ({modelo.codigo}). Preencha o código desta peça e ajuste o que for diferente — a ficha
+            original não muda.
+          </Aviso>
+        )}
         <ProdutoForm
           key={modelo?.id ?? "novo"}
+          modeloId={modelo?.id}
+          opcoesCopia={opcoes}
           fornecedores={fornecedores}
           marcas={marcas}
           podeEditar
