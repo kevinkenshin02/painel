@@ -7,7 +7,9 @@
    (bg-superficie, text-suave, border-borda...), nunca hexadecimal solto.
    --------------------------------------------------------------------- */
 
-:root {
+/* data-theme="dark" num elemento força o escuro só ali (ex.: cartão do login, que tem o logo branco) */
+:root,
+[data-theme="dark"] {
   --fundo: #0d0c0b;
   --superficie: #15120f;
   --superficie-2: #1c1814;

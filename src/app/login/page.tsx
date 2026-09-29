@@ -30,8 +30,12 @@ export default async function LoginPage() {
       />
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.5)_0%,rgba(10,9,8,0.78)_100%)]" />
 
-      <div className="relative z-10 grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
-        <section className="filete flex flex-col items-center justify-center gap-7 rounded-3xl border border-lat-borda bg-[rgba(12,11,10,0.84)] px-5 py-10 text-center text-lat-texto backdrop-blur-md sm:px-8 sm:py-12">
+      {/* um cartão só: marca em cima, entrada embaixo. Sempre escuro, porque o logo é branco. */}
+      <section
+        data-theme="dark"
+        className="filete relative z-10 flex w-full max-w-md flex-col rounded-3xl border border-borda-forte bg-[rgba(14,12,10,0.88)] px-5 py-9 text-texto shadow-cartao backdrop-blur-md sm:px-9 sm:py-10"
+      >
+        <div className="flex flex-col items-center text-center">
           <Image
             src="/marca/logo-tanaka.png"
             alt="Tanaka Ótica e Relojoaria"
@@ -39,31 +43,28 @@ export default async function LoginPage() {
             height={155}
             priority
             unoptimized
-            className="h-auto w-full max-w-[340px]"
+            className="h-auto w-full max-w-[300px]"
           />
-          <div className="h-px w-40 bg-[linear-gradient(90deg,transparent,#e0a63d,transparent)]" />
-          <div className="flex flex-col gap-1.5 text-sm text-lat-suave">
-            <span>{config?.endereco?.trim() || "Rua São Bento, 545 · Lojas 21 e 22 · Centro, São Paulo"}</span>
-            <span className="font-semibold text-[#e0a63d]">tanakaotica.com.br</span>
-          </div>
-        </section>
+          <div className="mt-3 text-[10px] font-semibold tracking-[0.28em] text-suave uppercase">Painel de gestão</div>
+          <div className="mt-6 h-px w-40 bg-[linear-gradient(90deg,transparent,var(--ouro),transparent)]" />
+        </div>
 
-        <section className="flex flex-col rounded-3xl border border-borda bg-superficie/95 px-5 py-8 shadow-cartao backdrop-blur-md sm:px-8 sm:py-9">
-          <div className="text-[11px] font-bold tracking-[0.18em] text-ouro uppercase">Sistema da loja</div>
-          <h1 className="mt-1.5 font-titulo text-[30px] leading-tight font-bold text-texto">
-            {semFuncionarios ? "Vamos criar seu acesso" : "Painel Tanaka"}
-          </h1>
-          <p className="mt-1.5 text-sm text-suave">
-            {semFuncionarios
-              ? "Você será o primeiro funcionário cadastrado, com acesso de administrador."
-              : "Escolha o seu nome e digite o seu PIN."}
-          </p>
+        <h1 className={semFuncionarios ? "mt-6 text-center font-titulo text-2xl leading-tight font-bold" : "sr-only"}>
+          {semFuncionarios ? "Vamos criar seu acesso" : "Painel Tanaka"}
+        </h1>
+        <p className="mt-5 text-center text-sm text-suave">
+          {semFuncionarios
+            ? "Você será o primeiro funcionário cadastrado, com acesso de administrador."
+            : "Escolha o seu nome e digite o seu PIN."}
+        </p>
 
-          <div className="mt-7 flex flex-1 flex-col justify-center">
-            {semFuncionarios ? <PrimeiroFuncionarioForm /> : <PerfilPicker funcionarios={funcionarios} />}
-          </div>
-        </section>
-      </div>
+        <div className="mt-5">{semFuncionarios ? <PrimeiroFuncionarioForm /> : <PerfilPicker funcionarios={funcionarios} />}</div>
+
+        <div className="mt-8 border-t border-borda pt-5 text-center text-xs leading-relaxed text-suave">
+          <div>{config?.endereco?.trim() || "Rua São Bento, 545 · Lojas 21 e 22 · Centro, São Paulo"}</div>
+          <div className="mt-0.5 font-semibold text-ouro">tanakaotica.com.br</div>
+        </div>
+      </section>
     </div>
   );
 }
