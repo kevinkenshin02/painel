@@ -17,7 +17,9 @@ export default async function LoginPage() {
   const semFuncionarios = funcionarios.length === 0;
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-6 py-10">
+    // self-start: o <body> é flex com altura fixa e esticaria esta caixa só até a altura da tela,
+    // cortando em cima e embaixo o que não coubesse (no celular, o logo sumia e não dava para rolar)
+    <div className="relative flex min-h-dvh w-full self-start items-center justify-center overflow-hidden px-4 py-8 sm:px-6 sm:py-10">
       <Image
         src="/marca/fundo-sakura.jpg"
         alt=""
@@ -29,7 +31,7 @@ export default async function LoginPage() {
       <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.5)_0%,rgba(10,9,8,0.78)_100%)]" />
 
       <div className="relative z-10 grid w-full max-w-5xl grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
-        <section className="filete flex flex-col items-center justify-center gap-7 rounded-3xl border border-lat-borda bg-[rgba(12,11,10,0.84)] px-8 py-12 text-center text-lat-texto backdrop-blur-md">
+        <section className="filete flex flex-col items-center justify-center gap-7 rounded-3xl border border-lat-borda bg-[rgba(12,11,10,0.84)] px-5 py-10 text-center text-lat-texto backdrop-blur-md sm:px-8 sm:py-12">
           <Image
             src="/marca/logo-tanaka.png"
             alt="Tanaka Ótica e Relojoaria"
@@ -46,7 +48,7 @@ export default async function LoginPage() {
           </div>
         </section>
 
-        <section className="flex flex-col rounded-3xl border border-borda bg-superficie/95 px-8 py-9 shadow-cartao backdrop-blur-md">
+        <section className="flex flex-col rounded-3xl border border-borda bg-superficie/95 px-5 py-8 shadow-cartao backdrop-blur-md sm:px-8 sm:py-9">
           <div className="text-[11px] font-bold tracking-[0.18em] text-ouro uppercase">Sistema da loja</div>
           <h1 className="mt-1.5 font-titulo text-[30px] leading-tight font-bold text-texto">
             {semFuncionarios ? "Vamos criar seu acesso" : "Painel Tanaka"}
