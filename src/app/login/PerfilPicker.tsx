@@ -76,23 +76,23 @@ function Perfis({
           key={f.id}
           type="button"
           onClick={() => onEscolher(f)}
-          className="group flex flex-col items-center gap-2.5 rounded-2xl border border-borda bg-superficie-2 p-4 transition hover:-translate-y-0.5 hover:border-borda-forte hover:bg-superficie-3"
+          className="bolha-botao group flex flex-col items-center gap-2 rounded-2xl px-2 py-3.5 transition-[transform,background-color,border-color] duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.97]"
         >
-          <div className="degrade-sol flex h-12 w-12 items-center justify-center rounded-full text-base font-bold text-sobre-sol">
+          <div className="degrade-sol flex h-11 w-11 items-center justify-center rounded-full text-[15px] font-bold text-sobre-sol shadow-[0_6px_16px_-6px_rgba(224,57,47,0.6)]">
             {iniciais(f.nome)}
           </div>
-          <span className="w-full truncate text-sm font-semibold text-texto">{f.nome}</span>
+          <span className="w-full truncate text-[13px] font-semibold text-texto">{f.nome}</span>
         </button>
       ))}
       <button
         type="button"
         onClick={onCriar}
-        className="flex flex-col items-center gap-2.5 rounded-2xl border border-dashed border-borda-forte p-4 text-suave transition hover:bg-superficie-2 hover:text-texto"
+        className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/15 px-2 py-3.5 text-suave transition-[transform,background-color,color] duration-200 ease-out hover:bg-white/5 hover:text-texto active:scale-[0.97]"
       >
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-borda-forte">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-white/20">
           <UserPlus className="h-5 w-5" aria-hidden />
         </div>
-        <span className="w-full truncate text-sm font-semibold" title="Novo funcionário">
+        <span className="w-full truncate text-[13px] font-semibold" title="Novo funcionário">
           Adicionar
         </span>
       </button>

@@ -10,7 +10,7 @@ const PIN_MIN = 4;
 const PIN_MAX = 6;
 
 const classeTecla =
-  "flex h-14 w-[4.5rem] items-center justify-center rounded-2xl border border-borda bg-superficie-2 text-xl font-bold text-texto transition hover:border-borda-forte hover:bg-superficie-3 active:scale-95 disabled:opacity-50";
+  "bolha-botao flex h-12 w-16 items-center justify-center rounded-2xl text-lg font-bold text-texto transition-[transform,background-color,border-color] duration-150 ease-out active:scale-95 disabled:opacity-50";
 
 export function PinPad({ funcionarioId }: { funcionarioId: number }) {
   const [pin, setPin] = useState("");
@@ -70,7 +70,7 @@ export function PinPad({ funcionarioId }: { funcionarioId: number }) {
   });
 
   return (
-    <div className="flex flex-col items-center gap-5">
+    <div className="flex flex-col items-center gap-4">
       <div className="flex flex-col items-center gap-2">
         <div className="flex gap-3" aria-label={`${pin.length} números digitados`}>
           {Array.from({ length: PIN_MAX }).map((_, i) => (
@@ -94,7 +94,7 @@ export function PinPad({ funcionarioId }: { funcionarioId: number }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-2">
         {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
           <button key={n} type="button" onClick={() => adicionarDigito(n)} disabled={isPending} className={classeTecla}>
             {n}

@@ -17,20 +17,21 @@ export default async function LoginPage() {
   const semFuncionarios = funcionarios.length === 0;
 
   return (
-    // self-start: o <body> é flex com altura fixa e esticaria esta caixa só até a altura da tela,
-    // cortando em cima e embaixo o que não coubesse (no celular, o logo sumia e não dava para rolar)
-    <div className="relative flex min-h-dvh w-full self-start items-center justify-center overflow-hidden px-4 py-8 sm:px-6 sm:py-10">
-      {/* fundo preso à tela (fixed): antes acompanhava a caixa e dava um "zoom" quando o cartão crescia para o PIN */}
+    // A tela de entrada rola dentro de si (fixed + overflow), com a barra escondida: a página nunca
+    // ganha barra de rolagem, e em tela baixa ainda dá para rolar com o dedo ou a roda do mouse.
+    <div className="fixed inset-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* fundo preso à tela: não muda de tamanho quando o cartão cresce para o PIN */}
       <div aria-hidden className="fixed inset-0">
         <Image src="/marca/fundo-sakura.jpg" alt="" fill priority unoptimized className="object-cover object-[35%_60%]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.5)_0%,rgba(10,9,8,0.78)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.45)_0%,rgba(10,9,8,0.72)_100%)]" />
       </div>
 
-      {/* um cartão só: marca em cima, entrada embaixo. Sempre escuro, porque o logo é branco. */}
-      <section
-        data-theme="dark"
-        className="filete relative z-10 flex w-full max-w-md flex-col rounded-3xl border border-borda-forte bg-[rgba(14,12,10,0.88)] px-5 py-9 text-texto shadow-cartao backdrop-blur-md sm:px-9 sm:py-10"
-      >
+      <div className="relative flex min-h-full items-center justify-center px-4 py-8">
+        {/* um cartão só, em vidro ("bolha"), que aparece com um pop suave. Sempre escuro: o logo é branco. */}
+        <section
+          data-theme="dark"
+          className="bolha filete flex w-full max-w-[380px] flex-col rounded-[28px] px-6 py-7 text-texto transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.34,1.3,0.64,1)] starting:scale-[0.94] starting:opacity-0 motion-reduce:transition-none sm:px-8 sm:py-8"
+        >
         <div className="flex flex-col items-center text-center">
           <Image
             src="/marca/logo-tanaka.png"
@@ -39,28 +40,29 @@ export default async function LoginPage() {
             height={155}
             priority
             unoptimized
-            className="h-auto w-full max-w-[300px]"
+            className="h-auto w-full max-w-[240px]"
           />
-          <div className="mt-3 text-[10px] font-semibold tracking-[0.28em] text-suave uppercase">Painel de gestão</div>
-          <div className="mt-6 h-px w-40 bg-[linear-gradient(90deg,transparent,var(--ouro),transparent)]" />
+          <div className="mt-2.5 text-[10px] font-semibold tracking-[0.28em] text-suave uppercase">Painel de gestão</div>
+          <div className="mt-5 h-px w-32 bg-[linear-gradient(90deg,transparent,var(--ouro),transparent)]" />
         </div>
 
-        <h1 className={semFuncionarios ? "mt-6 text-center font-titulo text-2xl leading-tight font-bold" : "sr-only"}>
+        <h1 className={semFuncionarios ? "mt-5 text-center font-titulo text-xl leading-tight font-bold" : "sr-only"}>
           {semFuncionarios ? "Vamos criar seu acesso" : "Painel Tanaka"}
         </h1>
-        <p className="mt-5 text-center text-sm text-suave">
+        <p className="mt-4 text-center text-[13px] text-suave">
           {semFuncionarios
             ? "Você será o primeiro funcionário cadastrado, com acesso de administrador."
             : "Escolha o seu nome e digite o seu PIN."}
         </p>
 
-        <div className="mt-5">{semFuncionarios ? <PrimeiroFuncionarioForm /> : <PerfilPicker funcionarios={funcionarios} />}</div>
+        <div className="mt-4">{semFuncionarios ? <PrimeiroFuncionarioForm /> : <PerfilPicker funcionarios={funcionarios} />}</div>
 
-        <div className="mt-8 border-t border-borda pt-5 text-center text-xs leading-relaxed text-suave">
+        <div className="mt-6 border-t border-white/10 pt-4 text-center text-[11px] leading-relaxed text-suave">
           <div>{config?.endereco?.trim() || "Rua São Bento, 545 · Lojas 21 e 22 · Centro, São Paulo"}</div>
           <div className="mt-0.5 font-semibold text-ouro">tanakaotica.com.br</div>
         </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
