@@ -11,7 +11,7 @@
     "desktop": "npm run build && electron .",
     "desktop:start": "electron .",
     "backup": "node scripts/backup.mjs",
-    "postinstall": "node scripts/aplicar-icone-electron.mjs"
+    "postinstall": "node node_modules/electron/install.js && node scripts/aplicar-icone-electron.mjs"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.10.0",
@@ -43,7 +43,6 @@
     "@prisma/engines@7.10.0": true,
     "prisma@7.10.0": true,
     "unrs-resolver@1.12.2": true,
-    "better-sqlite3@13.0.3": true,
-    "electron@44.4.3": true
+    "better-sqlite3@13.0.3": true
   }
 }
