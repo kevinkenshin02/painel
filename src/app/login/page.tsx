@@ -23,7 +23,7 @@ export default async function LoginPage() {
     <div className="fixed inset-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {/* fundo preso à tela: não muda de tamanho quando o cartão cresce para o PIN */}
       <div aria-hidden className="fixed inset-0">
-        <Image src="/marca/fundo-sakura.jpg" alt="" fill priority unoptimized className="object-cover object-[35%_60%]" />
+        <Image src="/marca/fundo-sakura.webp" alt="" fill priority unoptimized className="object-cover object-[35%_60%]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,8,0.45)_0%,rgba(10,9,8,0.72)_100%)]" />
       </div>
 
@@ -36,7 +36,7 @@ export default async function LoginPage() {
         >
         <div className="flex flex-col items-center text-center">
           <Image
-            src="/marca/logo-tanaka.png"
+            src="/marca/logo-tanaka.webp"
             alt="Tanaka Ótica e Relojoaria"
             width={760}
             height={155}

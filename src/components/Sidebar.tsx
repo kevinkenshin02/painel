@@ -71,7 +71,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
           <Menu className="h-5 w-5" aria-hidden />
         </button>
         <Link href="/" className="block">
-          <Image src="/marca/logo-tanaka.png" alt="Tanaka Ótica e Relojoaria" width={760} height={155} unoptimized className="h-7 w-auto" />
+          <Image src="/marca/logo-tanaka.webp" alt="Tanaka Ótica e Relojoaria" width={760} height={155} unoptimized className="h-7 w-auto" />
         </Link>
       </div>
 
@@ -108,7 +108,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
       {/* logo solta no menu (sem quadro atrás), ocupando a largura toda */}
       <Link href="/" className="-mx-1 block px-0 pt-10 pb-1 transition hover:opacity-90 lg:pt-2">
         <Image
-          src="/marca/logo-tanaka.png"
+          src="/marca/logo-tanaka.webp"
           alt="Tanaka Ótica e Relojoaria"
           width={760}
           height={155}
