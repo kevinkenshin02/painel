@@ -8,7 +8,7 @@ export type Aba = { href: string; rotulo: string; ativo: boolean; icone?: Lucide
 export function Abas({ abas }: { abas: Aba[] }) {
   return (
     <nav
-      className="nao-imprimir flex flex-wrap gap-1.5 rounded-2xl border border-borda bg-superficie p-2 shadow-cartao"
+      className="aro-vidro nao-imprimir flex flex-wrap gap-1.5 rounded-2xl border border-borda bg-vidro p-2 shadow-cartao"
       aria-label="Abas"
     >
       {abas.map(({ href, rotulo, ativo, icone: Icone, contagem }) => (

@@ -25,7 +25,7 @@ function dataPorExtenso() {
 /** Barra de atalhos no topo da página (como "Voltar · Relatórios · Caixa detalhado"). */
 export function BarraAtalhos({ atalhos, children }: { atalhos: Atalho[]; children?: ReactNode }) {
   return (
-    <nav className="nao-imprimir flex flex-wrap items-center gap-2 rounded-2xl border border-borda bg-superficie p-2.5 shadow-cartao">
+    <nav className="aro-vidro nao-imprimir flex flex-wrap items-center gap-2 rounded-2xl border border-borda bg-vidro p-2.5 shadow-cartao">
       {atalhos.map((a) => (
         <BotaoLink
           key={a.href + a.rotulo}

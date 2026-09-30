@@ -12,6 +12,8 @@
 [data-theme="dark"] {
   --fundo: #0d0c0b;
   --superficie: #15120f;
+  /* painéis de conteúdo sobre a foto de fundo: translúcidos, parecem vidro fosco sem desfocar nada ao vivo */
+  --vidro: rgba(21, 18, 15, 0.56);
   --superficie-2: #1c1814;
   --superficie-3: #26211b;
   --borda: rgba(224, 166, 61, 0.14);
@@ -48,6 +50,7 @@
 [data-theme="light"] {
   --fundo: #f4eee4;
   --superficie: #fffdf9;
+  --vidro: #fffdf9;
   --superficie-2: #f8f2e8;
   --superficie-3: #eee4d4;
   --borda: rgba(138, 98, 34, 0.16);
@@ -69,9 +72,15 @@
   color-scheme: light;
 }
 
+/* modo leve: painéis sólidos (sem a foto de fundo, a transparência não teria o que mostrar) */
+html[data-leve] {
+  --vidro: var(--superficie);
+}
+
 @theme inline {
   --color-fundo: var(--fundo);
   --color-superficie: var(--superficie);
+  --color-vidro: var(--vidro);
   --color-superficie-2: var(--superficie-2);
   --color-superficie-3: var(--superficie-3);
   --color-borda: var(--borda);
@@ -260,7 +269,72 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     backdrop-filter: blur(6px);
   }
 
-  /* modo leve (computador/celular fraco ou escolhido em Configurações): tira o que pesa */
+  /* fundo do Painel: a foto do login já desfocada num arquivo pronto (fundo-painel.webp, 9 KB) e escurecida.
+     Fica parada atrás de tudo; os cartões translúcidos (bg-vidro) deixam ela aparecer. Só no tema escuro. */
+  .fundo-painel {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(10, 9, 8, 0.28) 0%, rgba(10, 9, 8, 0.6) 100%),
+      url("/marca/fundo-painel.webp") center 40% / cover no-repeat;
+  }
+
+  /* aro de luz de vidro nos painéis (igual ao do login, mais suave): desenhado uma vez, não custa ao rolar */
+  .aro-vidro {
+    position: relative;
+  }
+  .aro-vidro::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.32) 0%,
+      rgba(255, 255, 255, 0.08) 18%,
+      transparent 40%,
+      transparent 70%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+  [data-theme="light"] .aro-vidro::after,
+  html[data-leve] .aro-vidro::after {
+    display: none;
+  }
+  [data-theme="light"] .fundo-painel {
+    display: none;
+  }
+
+  /* menu lateral e barra do celular em vidro de verdade: ficam parados, então o desfoque custa pouco */
+  .vidro-lateral {
+    background: rgba(10, 9, 8, 0.58);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    backdrop-filter: blur(24px) saturate(1.4);
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+  [data-theme="light"] .vidro-lateral {
+    background: var(--lat-fundo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* modo leve (computador/celular fraco ou escolhido em Configurações): tira o que pesa
+     (a cor --vidro sólida no modo leve fica junto dos tokens, fora desta camada, senão perde para eles) */
+  html[data-leve] .fundo-painel {
+    display: none;
+  }
+  html[data-leve] .vidro-lateral {
+    background: var(--lat-fundo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   html[data-leve] .entrada-tela {
     transition: none;
   }

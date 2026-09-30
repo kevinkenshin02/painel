@@ -12,7 +12,7 @@ export function Cartao({
   return (
     <section
       className={cx(
-        "rounded-2xl border border-borda bg-superficie shadow-cartao",
+        "aro-vidro rounded-2xl border border-borda bg-vidro shadow-cartao",
         filete && "filete",
         className
       )}

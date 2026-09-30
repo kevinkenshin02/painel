@@ -26,7 +26,7 @@ export default async function RelatoriosPage() {
           <Link
             key={href}
             href={href}
-            className="group flex flex-col gap-4 rounded-2xl border border-borda bg-superficie p-6 shadow-cartao transition hover:-translate-y-0.5 hover:border-borda-forte"
+            className="group flex flex-col gap-4 aro-vidro rounded-2xl border border-borda bg-vidro p-6 shadow-cartao transition hover:-translate-y-0.5 hover:border-borda-forte"
           >
             <div className={`${tom} flex h-12 w-12 items-center justify-center rounded-2xl`}>
               <Icone className="h-6 w-6" aria-hidden />

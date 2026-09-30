@@ -59,7 +59,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
   return (
     <>
       {/* celular/tablet: barra fina no topo; o menu vira gaveta que desliza por cima */}
-      <div className="nao-imprimir flex h-14 shrink-0 items-center gap-3 border-b border-lat-borda bg-lat-fundo px-3 text-lat-texto lg:hidden">
+      <div className="vidro-lateral nao-imprimir flex h-14 shrink-0 items-center gap-3 border-b border-lat-borda px-3 text-lat-texto lg:hidden">
         <button
           type="button"
           onClick={() => setGavetaAberta(true)}
@@ -90,7 +90,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
         if ((e.target as HTMLElement).closest("a")) setGavetaAberta(false);
       }}
       className={cx(
-        "nao-imprimir fixed inset-y-0 left-0 z-40 flex h-dvh w-[272px] max-w-[85vw] shrink-0 flex-col gap-4 border-r border-lat-borda bg-lat-fundo px-4 py-5 text-lat-texto",
+        "vidro-lateral nao-imprimir fixed inset-y-0 left-0 z-40 flex h-dvh w-[272px] max-w-[85vw] shrink-0 flex-col gap-4 border-r border-lat-borda px-4 py-5 text-lat-texto",
         "transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none",
         "lg:static lg:z-auto lg:max-w-none lg:translate-x-0",
         gavetaAberta ? "translate-x-0" : "-translate-x-full"

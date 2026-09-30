@@ -70,7 +70,7 @@ export function CabecalhoRelatorio({ titulo, descricao, nomePdf, children }: { t
 /** Formulário de filtros (GET): período + o que cada relatório precisar. */
 export function Filtros({ periodo, children, acao, semPeriodo = false }: { periodo?: Periodo; children?: ReactNode; acao: string; semPeriodo?: boolean }) {
   return (
-    <form action={acao} className="nao-imprimir flex flex-wrap items-end gap-3 rounded-2xl border border-borda bg-superficie p-4 shadow-cartao">
+    <form action={acao} className="nao-imprimir flex flex-wrap items-end gap-3 aro-vidro rounded-2xl border border-borda bg-vidro p-4 shadow-cartao">
       {!semPeriodo && periodo && (
         <>
           <Campo rotulo="De" className="w-40">
