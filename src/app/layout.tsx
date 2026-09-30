@@ -10,10 +10,13 @@ const work = Work_Sans({
   subsets: ["latin"],
 });
 
+// preload: false — fonte japonesa, dividida pelo Google em ~65 pedaços por peso: com preload a tela pedia ~200
+// arquivos de fonte ao abrir. Sem preload, o navegador baixa só os pedaços dos caracteres usados.
 const shippori = Shippori_Mincho({
   variable: "--font-shippori",
   weight: ["600", "700", "800"],
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
