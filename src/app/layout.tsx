@@ -31,12 +31,19 @@ export const viewport: Viewport = {
 };
 
 // O escuro é o padrão; só troca se a pessoa escolheu o claro em Configurações.
+// Efeitos: "leve" ou "completo" se escolhidos em Configurações; senão, leve em aparelho fraco
+// (até 4 núcleos, até 4 GB de memória ou economia de dados ligada).
 const THEME_INIT_SCRIPT = `
 (function () {
+  var d = document.documentElement;
   try {
-    if (localStorage.getItem("tema") === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
-    }
+    if (localStorage.getItem("tema") === "light") d.setAttribute("data-theme", "light");
+  } catch (e) {}
+  try {
+    var efeitos = null;
+    try { efeitos = localStorage.getItem("efeitos"); } catch (e) {}
+    var n = navigator, fraco = (n.hardwareConcurrency || 8) <= 4 || (n.deviceMemory || 8) <= 4 || !!(n.connection && n.connection.saveData);
+    if (efeitos === "leve" || (efeitos !== "completo" && fraco)) d.setAttribute("data-leve", "");
   } catch (e) {}
 })();
 `;

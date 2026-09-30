@@ -2,6 +2,7 @@ import { DatabaseBackup, Palette, Store, Target, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { salvarConfiguracaoLoja, salvarMetas } from "./actions";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { EfeitosSwitcher } from "./EfeitosSwitcher";
 import { BackupButton } from "./BackupButton";
 import { FuncionariosSection } from "./FuncionariosSection";
 import { getFuncionarioLogado } from "@/lib/currentUser";
@@ -37,6 +38,13 @@ export default async function ConfiguracoesPage() {
         <Cartao filete className="p-6">
           <TituloCartao selo="Aparência" icone={Palette} titulo="Tema do painel" descricao="Vale só para este computador." className="mb-5" />
           <ThemeSwitcher />
+          <div className="mt-6 border-t border-borda pt-5">
+            <h3 className="text-sm font-semibold text-texto">Efeitos visuais</h3>
+            <p className="mt-0.5 mb-3 text-xs text-suave">
+              No automático, computador ou celular mais fraco usa o leve sozinho. Vale só para este aparelho.
+            </p>
+            <EfeitosSwitcher />
+          </div>
         </Cartao>
 
         <Cartao filete className="p-6">

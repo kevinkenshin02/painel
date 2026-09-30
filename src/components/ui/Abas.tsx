@@ -18,7 +18,7 @@ export function Abas({ abas }: { abas: Aba[] }) {
           scroll={false}
           aria-current={ativo ? "page" : undefined}
           className={cx(
-            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition",
+            "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.97]",
             ativo ? "degrade-sol text-sobre-sol" : "text-texto-2 hover:bg-superficie-2 hover:text-texto"
           )}
         >

@@ -23,7 +23,7 @@ const TAMANHOS: Record<TamanhoBotao, string> = {
 
 export function botaoClasses(variante: VarianteBotao = "secundario", tamanho: TamanhoBotao = "md") {
   return cx(
-    "inline-flex shrink-0 items-center justify-center gap-2 font-semibold whitespace-nowrap transition",
+    "inline-flex shrink-0 items-center justify-center gap-2 font-semibold whitespace-nowrap transition active:scale-[0.97] disabled:active:scale-100",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ouro",
     "disabled:cursor-not-allowed disabled:opacity-50",
     VARIANTES[variante],

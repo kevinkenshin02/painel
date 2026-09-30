@@ -80,7 +80,7 @@ export function Sidebar({ nomeFuncionario, isAdmin }: { nomeFuncionario: string;
         aria-hidden
         className={cx(
           "nao-imprimir fixed inset-0 z-30 bg-black/60 transition-opacity duration-200 ease-out motion-reduce:transition-none lg:hidden",
-          gavetaAberta ? "opacity-100" : "pointer-events-none opacity-0"
+          gavetaAberta ? "desfoque-menu opacity-100" : "pointer-events-none opacity-0"
         )}
       />
 

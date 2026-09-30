@@ -50,12 +50,13 @@ export function CartaoKpi({
 
   const classes = cx(
     `kpi-${tom}`,
-    "relative flex min-h-[148px] flex-col justify-between overflow-hidden rounded-2xl p-5 shadow-cartao transition"
+    // brilho de vidro no topo, mais forte que nos cartões escuros (em cima do degradê ele precisa aparecer)
+    "relative flex min-h-[148px] flex-col justify-between overflow-hidden rounded-2xl p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),var(--sombra)] transition"
   );
 
   if (href) {
     return (
-      <Link href={href} className={cx(classes, "hover:-translate-y-0.5 hover:brightness-[1.05]")}>
+      <Link href={href} className={cx(classes, "hover:-translate-y-0.5 hover:brightness-[1.05] active:scale-[0.98]")}>
         {conteudo}
       </Link>
     );

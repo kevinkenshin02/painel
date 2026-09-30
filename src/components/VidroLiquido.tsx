@@ -71,7 +71,8 @@ export function VidroLiquido({ raio = 28, intensidade = 70, className, style, ch
     const brands = (navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands ?? [];
     const chromium = brands.some((b) => /Chromium|Google Chrome|Microsoft Edge/.test(b.brand));
     const semTransparencia = matchMedia("(prefers-reduced-transparency: reduce)").matches;
-    if (!chromium || semTransparencia) return;
+    const leve = document.documentElement.hasAttribute("data-leve");
+    if (!chromium || semTransparencia || leve) return;
     const el = ref.current;
     if (!el) return;
     let espera: ReturnType<typeof setTimeout> | undefined;

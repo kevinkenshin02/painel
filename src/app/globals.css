@@ -28,7 +28,8 @@
   --aviso-fundo: rgba(249, 178, 51, 0.14);
   --info: #8fb3e3;
   --info-fundo: rgba(143, 179, 227, 0.14);
-  --sombra: 0 18px 40px -26px rgba(0, 0, 0, 0.95);
+  /* fio de luz no topo (o "aro" do vidro) + sombra embaixo — estático, não custa nada ao rolar */
+  --sombra: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -26px rgba(0, 0, 0, 0.95);
   --brilho-topo: rgba(249, 178, 51, 0.07);
 
   /* iguais nos dois temas: marca e menu lateral (sempre escuro) */
@@ -63,7 +64,7 @@
   --aviso-fundo: #fbefd3;
   --info: #365f9c;
   --info-fundo: #e5eef9;
-  --sombra: 0 14px 34px -26px rgba(80, 55, 20, 0.55);
+  --sombra: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 14px 34px -26px rgba(80, 55, 20, 0.55);
   --brilho-topo: rgba(249, 178, 51, 0.12);
   color-scheme: light;
 }
@@ -238,6 +239,48 @@ input[type="month"]::-webkit-calendar-picker-indicator {
       inset -1px -1px 0 -0.5px rgba(255, 255, 255, 0.2),
       inset 0 0 18px rgba(255, 255, 255, 0.1),
       0 3px 10px -6px rgba(0, 0, 0, 0.5);
+  }
+
+  /* troca de tela: o conteúdo entra rápido, só com opacidade e 4px de deslocamento (placa de vídeo, sem refazer o layout) */
+  .entrada-tela {
+    transition:
+      opacity 180ms cubic-bezier(0.23, 1, 0.32, 1),
+      translate 180ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  @starting-style {
+    .entrada-tela {
+      opacity: 0;
+      translate: 0 4px;
+    }
+  }
+
+  /* fundo atrás do menu do celular: desfoque leve, só enquanto o menu está aberto */
+  .desfoque-menu {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  /* modo leve (computador/celular fraco ou escolhido em Configurações): tira o que pesa */
+  html[data-leve] .entrada-tela {
+    transition: none;
+  }
+  html[data-leve] .desfoque-menu {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  html[data-leve] .liquido {
+    background: rgba(20, 17, 14, 0.9);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  html[data-leve] .liquido::before {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .entrada-tela {
+      transition: none;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce) {
