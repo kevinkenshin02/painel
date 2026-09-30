@@ -30,6 +30,7 @@ if (-not (Test-Path "dev.db")) {
 
 Passo "Instalando as bibliotecas (pode levar alguns minutos)"
 Rodar "npm install"
+if (-not (Test-Path "node_modules\electron\dist\electron.exe")) { Parar "o Electron (a janela do Painel) nao foi baixado. Confira a internet e rode de novo." }
 
 Passo "Preparando o banco de dados"
 Rodar "npx prisma generate --config prisma7.config.ts"
